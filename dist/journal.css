@@ -1,0 +1,19 @@
+.journal-exercice {display:grid;gap:12px}
+.journal-exercice h2 {margin-bottom:4px}
+.journal-exercice .details {padding:8px 10px;border:1px solid var(--line);border-radius:9px}
+.journal-exercice .details .section {margin:10px 0}
+.journal-serie.series {grid-template-columns:26px minmax(0,1fr) 52px;margin:0;gap:8px}
+.journal-serie.series[data-colonnes="2"] {grid-template-columns:26px repeat(2,minmax(0,1fr)) 52px}
+.journal-serie.series-head {text-align:center}
+.journal-serie input {text-align:center}
+.journal-serie .check {min-height:44px}
+.serie-options summary {font-size:.83rem}
+.serie-options[open] .row {margin:8px 0}
+.bloc-serie {display:grid;gap:4px}
+.cible-routine {display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.cible-routine details[open] .row {margin:8px 0}
+.cible-routine .routine-entry {grid-template-columns:minmax(0,2.6fr) repeat(2,minmax(0,1fr)) 42px}
+@media (max-width:410px) {
+  .cible-routine .routine-entry {grid-template-columns:repeat(2,minmax(0,1fr)) 42px}
+  .cible-routine .routine-entry label:first-child {grid-column:1/-1}
+}

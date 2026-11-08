@@ -1,0 +1,27 @@
+.planning-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+.planning-grille{margin:14px 0}
+.planning-semaine,.planning-dates{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.planning-semaine{text-align:center;color:var(--muted);font-size:.72rem;margin-bottom:6px}
+.planning-date{min-height:46px;min-width:0;display:flex;flex-direction:column;gap:3px;padding:5px 0;border-color:transparent}
+.planning-date.autre-mois{color:var(--muted);background:transparent}
+.planning-date[aria-current=date]{color:var(--blue)}
+.planning-date[aria-pressed=true]{border-color:var(--blue);color:var(--blue);background:var(--input)}
+.planning-points{display:flex;gap:3px;min-height:6px;align-items:center;justify-content:center}
+.planning-points i,.planning-legende i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.planning-points i.done,.planning-legende i.done{background:var(--green)}
+.planning-legende{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted)}
+.planning-legende i{margin-right:4px}
+.planning-objectif progress{width:100%;height:10px;accent-color:var(--accent)}
+.planning-entree{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.planning-entree>button{justify-self:start}
+.planning-label{color:var(--blue);font-size:.72rem;font-weight:750}
+.planning-label.done{color:var(--green)}
+.planning-jour h2,.planning-objectif h2,.calendrier h2{text-transform:none;margin:0}
+.planning-jour h2::first-letter,.calendrier h2::first-letter{text-transform:uppercase}
+.planning-jour .stack,.planning-vide,.planning-objectif p{margin-top:12px}
+.planning-programme .tag{margin-bottom:8px}
+.planning-programme>button{margin-top:6px}
+.planning-favori[aria-pressed=true]{color:var(--blue);border-color:var(--blue)}
+@media(max-width:1000px){.planning-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:420px){.planning-mois-actions{gap:5px}.planning-mois-actions>button{padding-inline:8px}.planning-date{min-height:42px}.planning-dates,.planning-semaine{gap:2px}}
+
