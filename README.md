@@ -21,11 +21,18 @@ Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de
 - Dans **Données**, exportez le carnet ou téléchargez le pack de démonstrations pour le consulter hors ligne. Pour une sauvegarde chiffrée, conservez le fichier et son code séparément. La restauration demande les deux.
 - Les routines s’échangent par fichier, avec les fiches personnelles qu’elles utilisent. L’import protège les fiches du destinataire et adapte les identifiants en cas de conflit.
 
+## Ma semaine
+
+Dans **Ma semaine**, créez une semaine vide ou importez un fichier de semaine Cadence. Choisissez les exercices, les fourchettes de répétitions et de repos pour chaque jour. La semaine type reste dans le navigateur et est incluse dans la sauvegarde du carnet. L’interface met en évidence l’exercice à faire et laisse le repos visible.
+
+Si un poste est occupé, **Machine indisponible** propose des mouvements compatibles avec le matériel restant. Le remplacement vaut pour la séance en cours, conserve les séries déjà validées et laisse la nouvelle charge à saisir.
+
 ## Organisation du projet
 
 - `dist/app.js` et `dist/style.css` portent l’interface.
 - `dist/donnees.js` vérifie les sauvegardes, chiffre les exports et gère IndexedDB.
 - `dist/journal.js` définit les mesures et calculs des séries. `dist/planning.js` gère le calendrier, les programmes et le partage de routines.
+- `dist/semaine.js` valide les semaines importées et gère l’interface personnelle. `dist/alternatives.js` classe les substitutions et écarte le matériel signalé.
 - `dist/exercices.js`, `dist/mouvements.js` et `dist/medias.js` portent le catalogue, les schémas et le registre des médias.
 - `dist/sw.js` installe les ressources locales du site. Changez le numéro de cache à chaque mise à jour des ressources applicatives.
 

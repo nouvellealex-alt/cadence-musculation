@@ -1,6 +1,7 @@
 import { catalogue } from './exercices.js';
 import { mesureValide, mode, types, groupesSuperset, verifierCibleRoutine, volumeSerie, groupeMesure, mesureProgression } from './journal.js';
 import { verifierPlanning } from './planning.js';
+import { verifierSemaine } from './semaine.js';
 const schema = 1;
 let db;
 
@@ -63,10 +64,13 @@ export function verifier(a) {
   const ex = e => e && nom(e.id) && nom(e.nom) && nom(e.muscle) && nom(e.materiel) && texte(e.conseil,1000) &&
     (e.mesure === undefined || mesureValide(e.mesure));
   const m = x => ex(x) && liste(x.series,100,y=>s(y,mode(x))) && x.series.length > 0 &&
+    (x.repsCible === undefined || (entier(x.repsCible,1,1000) && entier(x.repsMax,x.repsCible,1000) && entier(x.reposMax,0,600))) &&
     (x.note === undefined || texte(x.note,1000)) &&
     (x.repos === undefined || entier(x.repos,0,600)) &&
     (x.superset === undefined || groupesSuperset.includes(x.superset));
   const seance = x => x && nom(x.id) && texte(x.nom) && texte(x.notes,3000) && date(x.debut) &&
+    (x.semaineJour === undefined || entier(x.semaineJour,0,6)) &&
+    (x.postesBloques === undefined || liste(x.postesBloques,100,nom)) &&
     (x.planId === undefined || nom(x.planId)) && liste(x.exercices,60,m);
   const ids = new Set(catalogue.map(x=>x.id));
   const routine = x => x && nom(x.id) && nom(x.nom) && liste(x.exercices,60,e=>verifierCibleRoutine(e,ids)) && x.exercices.length > 0;
@@ -80,8 +84,9 @@ export function verifier(a) {
   const favorisEx = a.favorisEx === undefined ? [] : a.favorisEx;
   if (!liste(favorisEx,ids.size,id=>ids.has(id)) || new Set(favorisEx).size !== favorisEx.length) invalide();
   const planning = verifierPlanning(a.planning,ids);
+  const semaine = verifierSemaine(a.semaine,ids);
   const {profil,theme,repos,actif,seances,routines,persos} = a;
-  return {schema,profil,theme,repos,actif,seances,routines,persos,favorisEx,planning};
+  return {schema,profil,theme,repos,actif,seances,routines,persos,favorisEx,planning,semaine};
 }
 
 const encoder = new TextEncoder();
