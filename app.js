@@ -171,7 +171,7 @@ function seance() {
   const champs='<label>Titre<input data-field="nom" maxlength="120" value="'+e(s.nom)+'"></label><label>Notes de séance<textarea data-field="notes" maxlength="3000" rows="2">'+e(s.notes)+'</textarea></label>';
   return titre('ENTRAÎNEMENT',guide?e(s.nom):'Séance en cours','Les modifications sont enregistrées sur cet appareil.')+
     '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'"><div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
-    (guide?'<section class="panel guide-navigation"><p id="guide-etape" aria-live="polite"></p><div class="row">'+bout('← Précédent','guide-avant')+bout('Suivant →','guide-apres')+bout('Tous les exercices','guide-tous','aria-pressed="false"')+('wakeLock' in navigator?bout('Écran allumé','guide-ecran','aria-pressed="'+ecranActif+'"'):'')+'</div></section>':'')+
+    (guide?'<section class="panel guide-navigation"><p id="guide-etape" aria-live="polite"></p><div class="row">'+bout('← Précédent','guide-avant')+bout('Suivant →','guide-apres')+bout('Choisir un exercice','guide-ouvrir-choix','','primary')+bout('Tous les exercices','guide-tous','aria-pressed="false"')+('wakeLock' in navigator?bout('Écran allumé','guide-ecran','aria-pressed="'+ecranActif+'"'):'')+'</div></section>':'')+
     (guide?'<details class="details panel"><summary>Titre et notes de séance</summary><div class="stack section">'+champs+'</div></details>':'<section class="panel stack">'+champs+'</section>')+
     s.exercices.map(carteJournal).join('')+
     (!s.exercices.length?vide('Ajoutez votre premier exercice pour enregistrer une série.'):'')+
@@ -354,6 +354,7 @@ function etapeGuide() {
   texte.textContent=i<0?'Ajoutez un exercice pour commencer.':(i+1)+' / '+exercices.length+' · '+exercices[i].nom+(exercices[i+1]?' · Ensuite : '+exercices[i+1].nom:'');
   $('[data-act="guide-avant"]').disabled=i<=0;
   $('[data-act="guide-apres"]').disabled=i<0||i>=exercices.length-1;
+  $('[data-act="guide-ouvrir-choix"]').disabled=i<0;
   $('[data-act="guide-tous"]').setAttribute('aria-pressed',String(guideTous));
   $('[data-act="guide-tous"]').textContent=guideTous?'Un exercice à la fois':'Tous les exercices';
   vue.querySelectorAll('.journal-exercice').forEach((el,n)=>{
@@ -372,6 +373,14 @@ function choisirEtape(s,i) {
   sauver();
   etapeGuide();
   if(!guideTous) $('.guide-navigation')?.scrollIntoView({block:'start'});
+}
+function choisirExerciceGuide(s) {
+  const selection=indexGuide(s);
+  modal('Choisir un exercice','<p class="muted">Passe à un autre poste et reviens quand il se libère. L’ordre conseillé et les séries saisies sont conservés.</p><div class="stack choix-ordre">'+s.exercices.map((ex,i)=>{
+    const faites=ex.series.filter(y=>y.faite).length;
+    const statut=faites===ex.series.length?'Terminé':faites?faites+' / '+ex.series.length+' séries':'À faire';
+    return bout('<span>'+(i+1)+'. '+e(ex.nom)+'</span><small>'+statut+(i===selection?' · En cours de consultation':'')+'</small>','guide-selection','data-i="'+i+'"'+(i===selection?' aria-current="step"':''));
+  }).join('')+'</div>');
 }
 async function maintenirEcran() {
   if(!ecranActif||chemin()!=='seance'||!etat.actif||document.hidden) return;
@@ -397,11 +406,11 @@ function exerciceJournal(exercice, cible = {}) {
   const fourchette=cible.repsMax===undefined?{}:{repsCible:cible.reps,repsMax:cible.repsMax,reposMax:cible.reposMax};
   return {id,nom,muscle,materiel,conseil,mesure,note,repos,...fourchette,series:Array.from({length:cible.series ?? 1},()=>initialiserSerie(mesure,cible))};
 }
-function demarrer(r, planId = r?.planId, semaineJour) {
+function demarrer(r, planId = r?.planId, semaineJour, guideIndex) {
   if (etat.actif) { aller('seance'); message('Une séance est déjà en cours.'); return; }
   guideTous=false;
   etat.actif={id:uuid(),nom:r?.nom??'Séance libre',notes:'',debut:Date.now(),reposFin:0,
-    planId,semaineJour,exercices:(r?.exercices??[]).map(x=>exerciceJournal(parId(x.id),x))};
+    planId,semaineJour,guideIndex,exercices:(r?.exercices??[]).map(x=>exerciceJournal(parId(x.id),x))};
   sauver();
   aller('seance');
 }
@@ -536,6 +545,13 @@ document.addEventListener('click',async ev=>{
       case 'guide-avant': choisirEtape(s,indexGuide(s)-1);break;
       case 'guide-apres': choisirEtape(s,indexGuide(s)+1);break;
       case 'guide-choisir': choisirEtape(s,Number(i));break;
+      case 'guide-ouvrir-choix': choisirExerciceGuide(s);break;
+      case 'guide-selection':
+        guideTous=false;
+        dialogue.close();
+        choisirEtape(s,Number(i));
+        $('[data-act="guide-ouvrir-choix"]')?.focus({preventScroll:true});
+        break;
       case 'guide-tous': guideTous=!guideTous;etapeGuide();break;
       case 'guide-ecran':
         if(ecranActif) libererEcran();

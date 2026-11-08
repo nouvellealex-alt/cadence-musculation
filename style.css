@@ -335,6 +335,9 @@ fieldset .row { margin-bottom: 8px; }
 .semaine-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
 .semaine-hero h2 { font-size: clamp(1.45rem, 4vw, 2.15rem); }
 .semaine-hero p:last-child { margin-bottom: 0; }
+.choix-ordre button { display: grid; justify-items: start; text-align: left; width: 100%; padding: 10px 14px; }
+.choix-ordre button[aria-current="step"] { border-color: var(--blue); }
+.choix-ordre small { color: var(--muted); font-weight: 500; }
 .semaine-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 .semaine-exercices { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .semaine-exercice {
@@ -463,6 +466,7 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
   .actions-ex { gap: 5px; }
   .actions-ex button:not(.etoile) { padding-inline: 8px; }
   .semaine-hero > .primary { width: 100%; min-height: 48px; }
+  .semaine-demarrage, .semaine-demarrage button { width: 100%; }
   .semaine-exercice { grid-template-columns: 1.5rem minmax(0, 1fr); gap: 8px; align-items: start; }
   .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 1.5rem 54px minmax(0, 1fr); }
   dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 54px minmax(0, 1fr); }
@@ -485,7 +489,7 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
   }
   .journal-guide .row button { min-width: 44px; padding: 4px 5px; font-size: .77rem; line-height: 1.2; }
   .guide-navigation > .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; }
-  .guide-navigation [data-act="guide-tous"] { grid-column: 1 / -1; }
+  .guide-navigation [data-act="guide-ouvrir-choix"] { grid-column: 1 / -1; }
 }
 
 @media (max-width: 680px) and (pointer: coarse) {

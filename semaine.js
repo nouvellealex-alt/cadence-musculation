@@ -61,11 +61,14 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
     const memeSeance=brouillon?.semaineJour===i&&brouillon.nom===jour.nom;
     const sousTitre=memeSeance?'En cours':jour.exercices.length?'Séance prévue':'Repos';
     const reprendre=bout('Reprendre la séance','semaine-reprendre','','primary');
-    const action=memeSeance?reprendre:(!brouillon&&jour.exercices.length?bout('Démarrer la séance','semaine-demarrer','','primary'):'');
+    const action=memeSeance?reprendre:(!brouillon&&jour.exercices.length?
+      '<div class="row semaine-demarrage">'+bout('Démarrer la séance','semaine-demarrer','','primary')+
+      (jour.exercices.length>1?bout('Choisir par quoi commencer','semaine-choisir-depart'):'')+'</div>':'');
     const autreBrouillon=brouillon&&!memeSeance?'<section class="panel row spread section" aria-label="Séance en cours"><div><p class="eyebrow">SÉANCE EN COURS</p><h2>'+e(brouillon.nom||'Séance sans titre')+'</h2><p class="muted">Terminez cette séance pour en commencer une autre.</p></div>'+reprendre+'</section>':'';
     const historiqueJour=faite?'<section class="panel row spread section" aria-label="Séance enregistrée cette semaine"><div><p class="eyebrow">ENREGISTRÉE CETTE SEMAINE</p><h2>'+e(faite.nom)+'</h2><p class="muted">Séance enregistrée pour le créneau du '+joursSemaine[i].toLocaleLowerCase('fr')+'.</p></div>'+bout('Consulter la séance','details','data-id="'+e(faite.id)+'"')+'</section>':'';
     return titre(i===aujourdHui?'Aujourd’hui':joursSemaine[i],e(profil.objectif)||'Votre semaine d’entraînement')+navigation+autreBrouillon+
       '<section class="panel semaine-hero"><div><p class="eyebrow">'+e(sousTitre)+'</p><h2>'+e(jour.nom)+'</h2><p class="muted">'+jour.exercices.length+' mouvements · '+jour.exercices.reduce((n,x)=>n+x.series,0)+' séries prévues</p></div>'+action+'</section>'+
+      (jour.exercices.length?'<h2 class="section">Ordre conseillé</h2>':'')+
       '<ol class="semaine-exercices">'+jour.exercices.map((x,n)=>{
         const ex=parId(x.id);
         if(!ex) return '';
@@ -88,9 +91,22 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
       case 'semaine-activer': mutation({...actuel(),active:true});break;
       case 'semaine-masquer': mutation({...actuel(),active:false});break;
       case 'semaine-reprendre': aller('seance');break;
-      case 'semaine-demarrer': {
+      case 'semaine-choisir-depart': {
         const jour=actuel().jours[courant()];
-        if(jour.exercices.length) demarrer(jour,undefined,courant());
+        modal('Par quoi veux-tu commencer ?', '<p class="muted">Choisis un exercice. Les numéros indiquent l’ordre conseillé de ta séance.</p><div class="stack choix-ordre">'+jour.exercices.map((x,n)=>{
+          const ex=parId(x.id);
+          return bout('<span>'+String(n+1)+'. '+e(ex.nom)+'</span><small>'+e(ex.equipement||ex.materiel)+'</small>','semaine-depart-ex',attrs(n));
+        }).join('')+'</div>');
+        break;
+      }
+      case 'semaine-demarrer':
+      case 'semaine-depart-ex': {
+        const jour=actuel().jours[courant()];
+        const depart=act==='semaine-depart-ex'?Number(i):0;
+        if(jour.exercices[depart]) {
+          fermer();
+          demarrer(jour,undefined,courant(),depart);
+        }
         break;
       }
       case 'semaine-importer':
