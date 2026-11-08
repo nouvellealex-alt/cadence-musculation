@@ -27,6 +27,10 @@ Dans **Ma semaine**, créez une semaine vide ou importez un fichier de semaine C
 
 Sur iPhone, ouvrez Cadence dans Safari, utilisez **Partager → Sur l’écran d’accueil** et activez **Ouvrir comme app web** si l’option apparaît. Ouvrez ensuite Cadence depuis son icône. Restaurez le carnet dans l’app installée depuis **Plus → Données** si votre historique est stocké dans un autre navigateur ou appareil.
 
+Dans **Plus → Poids**, enregistrez une pesée par date et consultez la moyenne des pesées sur les sept derniers jours calendaires. La pesée est incluse dans la sauvegarde du carnet.
+
+Dans **Exercices → Ma machine**, créez une fiche locale avec un étage ou une zone et une photo facultative. La photo est redimensionnée dans le navigateur et reste exclue des fichiers de routine. Dans **Données**, choisissez explicitement **Inclure les photos** si vous souhaitez les transférer dans une sauvegarde complète.
+
 Si un poste est occupé, **Machine indisponible** propose des mouvements proches avec le matériel restant. Choisissez le poste concerné si l’exercice utilise plusieurs équipements. La recherche manuelle depuis cette fenêtre respecte aussi cette exclusion. Le remplacement vaut pour la séance en cours, conserve les séries déjà validées et laisse la nouvelle charge à saisir. Sur les appareils compatibles, **Écran allumé** évite la mise en veille pendant la séance guidée.
 
 ## Organisation du projet

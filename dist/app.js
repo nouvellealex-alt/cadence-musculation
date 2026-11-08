@@ -3,7 +3,9 @@ import { catalogue, modeles } from './exercices.js';
 import { creerPlanning, jourLocal, ajouterJours } from './planning.js';
 import { creerSemaine, reposTexte, lireImport, collageImport } from './semaine.js';
 import { alternatives, poste, posteDisponible, postesPossibles } from './alternatives.js';
-import { ouvrir, ecrire, nouveau, verifier, uuid, chiffrer, dechiffrer, volume, records } from './donnees.js';
+import { rendrePoids, ajouterPoids, supprimerPoids } from './poids.js';
+import { photoValide, preparerPhoto, limitePhotos, sauvegardePhotos } from './machines.js';
+import { ouvrir, ecrire, nouveau, verifier, uuid, chiffrer, dechiffrer, volume, records, tailleSauvegardeMax } from './donnees.js';
 import { modes, mode, types, champsSerie, effort, groupesSuperset, initialiserSerie, decrireSerie, mesureProgression, indicateurs, volumeSerie, groupeMesure, reposApres, disques, csvSeances } from './journal.js';
 
 const $ = (s, root=document) => root.querySelector(s);
@@ -17,6 +19,7 @@ const voies = {
   planning:['Planning','M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4 M8 14h3 M13 17h3'],
   exercices:['Exercices','M3 4h8v7H3z M13 4h8v7h-8z M3 13h8v7H3z M13 13h8v7h-8z'],
   stats:['Progression','M3 3v18h18M7 15l4-5 4 2 5-7'],
+  poids:['Poids','M4 7h16v14H4z M8 12a4 4 0 0 1 8 0 M12 12l2-2'],
   donnees:['Données','M4 7h16v14H4z M3 3h18v4H3z M9 12h6']
 };
 const svg = (path) => '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="'+path+'"/></svg>';
@@ -40,6 +43,7 @@ let progressionIndicateur = 'principal';
 let filtre = {nom:'',muscle:'',materiel:'',lieu:'',categorie:'',collection:''};
 let limiteCatalogue = 30;
 let guideTous=false;
+let editionPoids='';
 let etatHorsLigne='Préparation du carnet hors ligne…';
 let ecranActif=false;
 let verrouEcran=null;
@@ -155,10 +159,13 @@ function carteJournal(x,i) {
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
     const mesure = champs.map(champ=>inputSerie(champ,champ[0]==='kg'&&!y.faite&&y.kg===0?'':y[champ[0]],at+' data-field="'+champ[0]+'"',champ[2]+' de la série '+(j+1))).join('');
+    const ajuster=guide&&mode(x)==='charge'?'<div class="row charge-ajustement" '+(y.faite?'hidden':'')+'>'+
+      bout('−2,5 kg','ajuster-charge',at+' data-delta="-2.5" aria-label="Retirer 2,5 kg de la série '+(j+1)+'"')+
+      bout('+2,5 kg','ajuster-charge',at+' data-delta="2.5" aria-label="Ajouter 2,5 kg à la série '+(j+1)+'"')+'</div>':'';
     const precedent=seriesPrecedentes[j];
     const copie = precedent?bout('Précédent · '+e(decrireSerie(x,precedent,nombre)),'reprendre-serie',at+' aria-label="Reprendre les valeurs de la série '+(j+1)+'"'+(y.faite?' hidden':''),'serie-precedente'):'';
     return '<div class="bloc-serie" '+at+'><div class="series journal-serie '+(y.faite?'done':'')+'" data-colonnes="'+champs.length+'"><span>'+(j+1)+'</span>'+mesure+
-      bout('✓','valider',at+' aria-label="Valider la série '+(j+1)+'" aria-pressed="'+y.faite+'"','check')+'</div>'+copie+
+      bout('✓','valider',at+' aria-label="Valider la série '+(j+1)+'" aria-pressed="'+y.faite+'"','check')+'</div>'+ajuster+copie+
       '<details class="details serie-options"><summary>Options de la série '+(j+1)+(y.type==='Travail'?'':' · '+y.type)+'</summary><div class="row filters"><label>Type<select '+at+' data-field="type" aria-label="Type de la série '+(j+1)+'">'+choix(types,y.type)+'</select></label><label>Effort perçu (RPE)'+inputSerie(effort,y.rpe,at+' data-field="rpe"','RPE de la série '+(j+1),false)+'</label></div><div class="row">'+bout('↑','monter-serie',at+' aria-label="Monter la série '+(j+1)+'"'+(j===0?' disabled':''))+bout('↓','descendre-serie',at+' aria-label="Descendre la série '+(j+1)+'"'+(j===x.series.length-1?' disabled':''))+bout('Supprimer','retirer-serie',at+' aria-label="Supprimer la série '+(j+1)+'"')+'</div></details></div>';
   }).join('');
   const historique = !guide&&derniere ? ' · Précédent : '+seriesPrecedentes.slice(0,4).map(y=>decrireSerie(x,y,nombre)).join(' / ') : '';
@@ -198,11 +205,12 @@ function chercherExercices(requete, criteres={}) {
     if (!recents.has(x.id)) recents.set(x.id,recents.size);
   }
   return tous().filter(x=>{
-    const index = normal([x.nom,x.muscle,x.materiel,x.equipement,x.lieu,x.categorie,...(Array.isArray(x.synonymes)?x.synonymes:[])].join(' '));
+    const index = normal([x.nom,x.muscle,x.materiel,x.equipement,x.lieu,x.categorie,x.zone,...(Array.isArray(x.synonymes)?x.synonymes:[])].join(' '));
     return mots.every(mot=>index.includes(mot)) &&
       ['muscle','materiel','lieu','categorie'].every(k=>!criteres[k]||criteres[k]===x[k]) &&
       (criteres.collection!=='favoris'||estFavori(x.id)) &&
       (criteres.collection!=='personnels'||etat.persos.includes(x)) &&
+      (criteres.collection!=='machines'||x.machine===true) &&
       (criteres.collection!=='recents'||recents.has(x.id));
   }).sort((a,b)=>{
     if (criteres.collection==='recents') return recents.get(a.id)-recents.get(b.id);
@@ -224,6 +232,7 @@ const packMedias = [...new Set(catalogue.flatMap(x=>[
   ...(x.media?.video?[x.media.video.src]:[])
 ]))];
 function miniatureEx(x,f) {
+  if(x.machine===true&&photoValide(x.photo)) return '<img src="'+e(x.photo)+'" alt="" width="280" height="178" loading="lazy" decoding="async">';
   const photo=mediaEx(x.id)?.images?.[0];
   if (photo) return '<img src="'+e(photo.src)+'" alt="" width="280" height="178" loading="lazy" decoding="async">';
   return f?dessin(f,1,true):'';
@@ -232,6 +241,7 @@ function creditMedia(media) {
   return '<small class="muted"><a href="'+e(media.source)+'" target="_blank" rel="noreferrer">'+e(media.auteur)+'</a> · <a href="'+e(media.licenceUrl)+'" target="_blank" rel="noreferrer">'+e(media.licence)+'</a>'+(media.modifications?' · '+e(media.modifications):'')+'</small>';
 }
 function demonstration(x,f) {
+  if(x.machine===true&&photoValide(x.photo)) return '<figure class="film"><img src="'+e(x.photo)+'" width="280" alt="'+e(x.nom)+'"><figcaption>Photo personnelle du poste</figcaption></figure>';
   const media=mediaEx(x.id);
   const images=media?.images??[];
   const photos=images.length?'<div class="positions">'+images.map((photo,i)=>'<figure><img src="'+e(photo.src)+'" alt="'+e(x.nom)+' · vue '+(i+1)+'" loading="lazy"><figcaption>'+creditMedia(photo)+'</figcaption></figure>').join('')+'</div>':'';
@@ -256,7 +266,7 @@ function apercuEx(ex, contexte) {
   const derniere = etat.seances.flatMap(s=>s.exercices).find(x=>x.id===ex.id);
   const options = tous().filter(x=>x.id!==ex.id && x.muscle===ex.muscle).slice(0,3);
   modal(e(ex.nom),'<div class="stack"><div class="row"><span class="tag">'+e(ex.muscle)+'</span><span class="tag">'+e(ex.equipement||ex.materiel)+'</span>'+(ex.niveau?'<span class="tag">'+e(ex.niveau)+'</span>':'')+etoile(ex)+'</div>'+demonstration(ex,f)+
-    '<section><h3>Exécution</h3><p>'+e(ex.conseil||'Aucune consigne renseignée.')+'</p>'+((ex.vigilance||f?.erreur)?'<p><strong>Point d’attention</strong> · '+e(ex.vigilance||f.erreur)+'</p>':'')+(secondaires?'<p class="muted">Muscles secondaires · '+e(secondaires)+'</p>':'')+'</section>'+
+    (ex.zone?'<p><strong>Emplacement</strong> · '+e(ex.zone)+'</p>':'')+'<section><h3>Exécution</h3><p>'+e(ex.conseil||'Aucune consigne renseignée.')+'</p>'+((ex.vigilance||f?.erreur)?'<p><strong>Point d’attention</strong> · '+e(ex.vigilance||f.erreur)+'</p>':'')+(secondaires?'<p class="muted">Muscles secondaires · '+e(secondaires)+'</p>':'')+'</section>'+
     (derniere?'<section><h3>Dernières séries enregistrées</h3><p>'+derniere.series.filter(y=>y.faite).map(y=>decrireSerie(derniere,y,nombre)).join(' · ')+'</p></section>':'')+
     (options.length?'<section><h3>Autres exercices du même groupe</h3><div class="row">'+options.map(x=>bout(e(x.nom),'exercice','data-id="'+e(x.id)+'" data-context="'+e(contexte)+'"')).join('')+'</div></section>':'')+
     '<div class="row">'+(etat.actif&&contexte!=='seance'?bout('Ajouter à la séance','ex-vers-seance','data-id="'+e(ex.id)+'"','primary'):'')+(perso?bout('Modifier','editer-ex','data-id="'+e(ex.id)+'"'):'')+'</div></div>');
@@ -267,7 +277,7 @@ function exercices() {
   const images=catalogue.filter(x=>miniatureEx(x,mouvements[x.id])).length;
   const films=catalogue.filter(x=>x.media?.video).length;
   return titre('BIBLIOTHÈQUE','Exercices',catalogue.length+' fiches · '+images+' illustrées · '+films+' vidéos. Recherchez un mouvement par nom, muscle ou matériel.')+
-    '<section class="panel stack"><label>Rechercher<input id="recherche" type="search" placeholder="Ex. développé couché, dos, haltères" value="'+e(filtre.nom)+'"></label><div class="row filters">'+select('muscle','Muscles')+select('materiel','Matériel')+select('lieu','Lieu et appui')+select('categorie','Type')+'</div><div class="row spread"><label>Collection<select data-filter="collection"><option value="">Tout afficher</option><option value="favoris" '+(filtre.collection==='favoris'?'selected':'')+'>Mes favoris</option><option value="recents" '+(filtre.collection==='recents'?'selected':'')+'>Récemment utilisés</option><option value="personnels" '+(filtre.collection==='personnels'?'selected':'')+'>Mes exercices</option></select></label>'+bout('＋ Exercice personnalisé','creer-ex','','primary')+'</div></section><div class="grid section" id="cartes">'+cartes()+'</div>';
+    '<section class="panel stack"><label>Rechercher<input id="recherche" type="search" placeholder="Ex. développé couché, dos, haltères" value="'+e(filtre.nom)+'"></label><div class="row filters">'+select('muscle','Muscles')+select('materiel','Matériel')+select('lieu','Lieu et appui')+select('categorie','Type')+'</div><div class="row spread"><label>Collection<select data-filter="collection"><option value="">Tout afficher</option><option value="favoris" '+(filtre.collection==='favoris'?'selected':'')+'>Mes favoris</option><option value="recents" '+(filtre.collection==='recents'?'selected':'')+'>Récemment utilisés</option><option value="personnels" '+(filtre.collection==='personnels'?'selected':'')+'>Mes exercices</option><option value="machines" '+(filtre.collection==='machines'?'selected':'')+'>Mes machines</option></select></label>'+bout('＋ Ma machine','creer-machine','','primary')+bout('＋ Exercice personnalisé','creer-ex')+'</div></section><div class="grid section" id="cartes">'+cartes()+'</div>';
 }
 function courbeEx(seances) {
   const exercices = new Map();
@@ -320,13 +330,17 @@ function stats() {
     courbeEx(ss)+'<h2 class="section">Records personnels</h2><p class="muted">Hors échauffement. Estimation d’Epley jusqu’à 12 répétitions en mode Charge, charge réelle à une répétition.</p><div class="grid two">'+(rs.map(x=>'<article class="panel"><h3>'+e(x.nom)+'</h3><small>'+indicateurs[x.mesure][0]+' · '+nombre(x.meilleur)+' '+indicateurs[x.mesure][1]+(x.rm?' · 1RM estimé '+nombre(x.rm)+' kg':'')+'</small></article>').join('')||vide('Aucun record sur cette période.'))+'</div><h2 class="section">Historique</h2><div class="stack">'+(ss.map(ligneSeance).join('')||vide('Aucune séance enregistrée sur cette période.'))+'</div>';
 }
 function accesDonnees() {
+  const sauvegardeAncienne=Date.now()-(etat.derniereSauvegarde??0)>14*86400000;
+  const rappel=sauvegardeAncienne&&(etat.seances.length||etat.poids?.length)?'<p class="muted">Pense à exporter une copie récente de ton carnet.</p>':'';
   return titre('PROFIL LOCAL','Données et préférences','Le carnet est conservé dans ce navigateur. Transférez-le avec un fichier de sauvegarde.')+
     '<div class="grid two"><section class="panel stack"><h2>Préférences</h2><label>Apparence<select id="theme">'+choix(['sombre','clair'],etat.theme)+'</select></label><label>Repos automatique en secondes (0 pour désactiver)<input id="reglage-repos" type="number" min="0" max="600" value="'+etat.repos+'"></label></section>'+
-    '<section class="panel stack"><h2>Sauvegarder et récupérer</h2><p class="muted">Le fichier chiffré et son code sont tous deux nécessaires à la récupération. Conservez-les séparément.</p><div class="row">'+bout('Créer une sauvegarde chiffrée','export-chiffre','','primary')+bout('Exporter en JSON','export')+bout('Exporter les séances en CSV','export-csv')+bout('Restaurer un fichier','importer')+'</div></section></div>'+
+    '<section class="panel stack"><h2>Sauvegarder et récupérer</h2><p class="muted">Le fichier chiffré et son code sont tous deux nécessaires à la récupération. Conservez-les séparément.</p>'+rappel+
+    (etat.persos.some(x=>x.photo)?'<label>Photos personnelles dans la sauvegarde<select id="photos-sauvegarde"><option value="non">Garder les photos sur cet appareil</option><option value="oui">Inclure les photos</option></select></label>':'')+
+    '<div class="row">'+bout('Créer une sauvegarde chiffrée','export-chiffre','','primary')+bout('Exporter en JSON','export')+bout('Exporter les séances en CSV','export-csv')+bout('Restaurer un fichier','importer')+'</div></section></div>'+
     '<section class="panel section"><h2>Effacer le carnet</h2><p class="muted">Cette action efface les séances, les routines, les exercices personnels et le brouillon de cet appareil.</p>'+bout('Effacer mes données','effacer','','danger')+'</section>';
 }
 function donnees() {
-  return accesDonnees()+'<section class="panel section stack"><h2>Cadence sur iPhone</h2><p class="muted">Ouvre Cadence depuis une icône sur l’écran d’accueil.</p><p id="etat-hors-ligne" class="muted" role="status">'+e(etatHorsLigne)+'</p><div class="row">'+bout('Installer sur iPhone','installer-iphone')+'</div></section>'+
+  return accesDonnees()+'<section class="panel section stack"><h2>Cadence sur iPhone</h2><p class="muted">Ouvre Cadence depuis une icône sur l’écran d’accueil.</p><p id="etat-hors-ligne" class="muted" role="status">'+e(etatHorsLigne)+'</p><div class="row">'+bout('Installer sur iPhone','installer-iphone')+(navigator.storage?.persist?bout('Protéger le stockage local','stockage-persistant'):'')+'</div></section>'+
     '<section class="panel section stack sources-cadence"><h2>Démonstrations hors ligne</h2><p class="muted">Enregistrez les '+packMedias.length+' fichiers illustrés dans ce navigateur pour les consulter même sans réseau.</p><div class="row">'+bout('Télécharger les démonstrations','pack-hors-ligne')+'</div><p id="etat-pack" role="status"></p></section>'+
     '<section class="panel section sources-cadence"><h2>Un carnet ouvert</h2><p class="muted">Cadence est publié sous AGPL-3.0. Les crédits et licences des médias figurent sur chaque fiche.</p><a href="https://github.com/nouvellealex-alt/cadence-musculation" target="_blank" rel="noreferrer">Code source et installation</a></section>';
 }
@@ -342,7 +356,7 @@ const semaine=creerSemaine({etat:()=>etat,parId,tous,e,bout,modal,fermer:()=>dia
     const dernier=precedent(x);
     return dernier?.series.filter(s=>s.faite).slice(0,3).map(s=>decrireSerie(dernier,s,nombre)).join(' · ')??'';
   }});
-const vues = {accueil,semaine:semaine.rendre,seance,routines,planning:planning.rendre,exercices,stats,donnees};
+const vues = {accueil,semaine:semaine.rendre,seance,routines,planning:planning.rendre,exercices,stats,poids:()=>rendrePoids(etat,titre,bout,editionPoids),donnees};
 const navPrincipale=['semaine','seance','exercices','stats'];
 function afficher(focus=false) {
   const page=chemin();
@@ -464,13 +478,15 @@ function editerSeance(item) {
 }
 function telecharger(contenu, suffixe, extension, type) {
   const lien = document.createElement('a');
-  lien.href = URL.createObjectURL(new Blob([contenu],{type}));
+  lien.href = URL.createObjectURL(contenu instanceof Blob?contenu:new Blob([contenu],{type}));
   lien.download = 'cadence-'+new Date().toISOString().slice(0,10)+suffixe+'.'+extension;
   lien.click();
   setTimeout(()=>URL.revokeObjectURL(lien.href),1000);
 }
 function fichier(contenu, suffixe) {
-  telecharger(JSON.stringify(contenu,null,2),suffixe,'json','application/json');
+  const blob=new Blob([JSON.stringify(contenu)],{type:'application/json'});
+  if(blob.size>tailleSauvegardeMax) throw Error('Ce carnet dépasse la taille maximale de sauvegarde. Essaie sans les photos.');
+  telecharger(blob,suffixe,'json','application/json');
 }
 function calculerCharge() {
   const cible=etat.actif.exercices.find(x=>mode(x)==='charge')?.series[0].kg || 60;
@@ -528,6 +544,11 @@ vue.addEventListener('input',ev=>{
   if (el.id==='recherche') {filtre.nom=el.value;limiteCatalogue=30;$('#cartes').innerHTML=cartes();}
   lireChamp(el);
 });
+vue.addEventListener('focusin',ev=>{
+  const champ=ev.target;
+  if(!champ.matches?.('.journal-serie [data-charge-decimale]')||!champ.value) return;
+  requestAnimationFrame(()=>{if(document.activeElement===champ) champ.select();});
+});
 vue.addEventListener('change',ev=>{
   if (!etat || verrou) return;
   const el=ev.target;
@@ -564,6 +585,9 @@ document.addEventListener('click',async ev=>{
   try {
     if (semaine.action(b)||planning.action(b)) return;
     switch(act) {
+      case 'stockage-persistant':
+        message(await navigator.storage.persist()?'Le navigateur a accordé le stockage persistant.':'Le navigateur conserve ses règles de stockage. Garde une sauvegarde du carnet.');
+        break;
       case 'installer-iphone':
         modal('Installer Cadence sur iPhone','<ol class="installation-iphone"><li>Ouvre Cadence dans <strong>Safari</strong>.</li><li>Dans le menu de Safari, touche <strong>Partager</strong>, puis <strong>Sur l’écran d’accueil</strong>.</li><li>Active <strong>Ouvrir comme app web</strong> si Safari propose ce réglage, puis touche <strong>Ajouter</strong>.</li><li>Ouvre Cadence depuis son icône une première fois avec du réseau.</li></ol><p class="muted">Pour récupérer un carnet existant, exporte-le depuis Données, puis restaure-le dans Cadence ouvert depuis son icône. Si tu veux seulement ton programme, importe ton fichier depuis Ma semaine.</p>');
         break;
@@ -675,9 +699,13 @@ document.addEventListener('click',async ev=>{
         break;
       case 'remplacer-ex-confirme': remplacerEx(Number(i),id);break;
       case 'creer-ex':
+      case 'creer-machine':
       case 'editer-ex': {
         const ex=act==='editer-ex'?parId(id):{};
-        modal(ex.id?'Modifier l’exercice':'Exercice personnalisé','<form class="stack" data-form="exercice" data-id="'+e(ex.id)+'"><label>Nom<input name="nom" value="'+e(ex.nom)+'" required maxlength="120"></label><label>Groupe musculaire<input name="muscle" value="'+e(ex.muscle)+'" required maxlength="120"></label><label>Matériel<input name="materiel" value="'+e(ex.materiel)+'" required maxlength="120"></label><label>Consigne<textarea name="conseil" maxlength="1000">'+e(ex.conseil)+'</textarea></label><button class="primary">Enregistrer</button></form>');break;
+        const machine=act==='creer-machine'||ex.machine===true;
+        const options=machine?'<label>Étage ou zone<input name="zone" value="'+e(ex.zone)+'" maxlength="80"></label><label>Photo privée du poste<input name="photo" type="file" accept="image/*"></label>'+
+          (ex.photo?'<label>Photo actuelle<select name="photo-actuelle"><option value="garder">Conserver</option><option value="retirer">Retirer</option></select></label>':'')+'<p class="muted">La photo reste locale. Elle est exclue des fichiers de routine.</p><p data-import-etat role="alert"></p>':'';
+        modal(ex.id?(machine?'Modifier la machine':'Modifier l’exercice'):(machine?'Nouvelle machine':'Exercice personnalisé'),'<form class="stack" data-form="exercice" data-machine="'+machine+'" data-id="'+e(ex.id)+'"><label>Nom<input name="nom" value="'+e(ex.nom)+'" required maxlength="120"></label><label>Groupe musculaire<input name="muscle" value="'+e(ex.muscle)+'" required maxlength="120"></label><label>Matériel<input name="materiel" value="'+e(ex.materiel||(machine?'Machine':''))+'" required maxlength="120"></label>'+options+'<label>Consigne<textarea name="conseil" maxlength="1000">'+e(ex.conseil)+'</textarea></label><button class="primary">Enregistrer</button></form>');break;
       }
       case 'ex-vers-seance': ajouterEx(id);break;
       case 'retirer-ex': if (x.series.some(y=>y.faite)) confirmation('Retirer cet exercice ?','Ses séries validées seront retirées de la séance.','retirer-ex-ok',i);else {s.exercices.splice(Number(i),1);actualiser();}break;
@@ -710,10 +738,29 @@ document.addEventListener('click',async ev=>{
       case 'retirer-serie':
         if (x.series.length===1) throw Error('Gardez une série ou retirez l’exercice.');
         x.series.splice(Number(j),1);actualiserJournal('[data-act="ajouter-serie"][data-i="'+i+'"]');break;
-      case 'valider': {
-        const ligne=b.closest('.series');
-        if ([...b.closest('.bloc-serie').querySelectorAll('input')].some(el=>!el.validity.valid)) throw Error('Vérifiez les valeurs de cette série.');
+      case 'ajuster-charge': {
+        const charge=$('input[data-field="kg"]',b.closest('.bloc-serie'));
+        if(!charge||x.series[Number(j)].faite) break;
+        const valeur=Number(charge.value.replace(',','.'));
+        if(!Number.isFinite(valeur)) throw Error('Saisis une charge valide avant de l’ajuster.');
+        charge.value=String(Math.max(0,Math.min(2000,Math.round((valeur+Number(b.dataset.delta))*1000)/1000)));
+        lireChamp(charge);
+        break;
+      }
+      case 'valider':
+      case 'valider-zero': {
+        const bouton=act==='valider'?b:$('[data-act="valider"][data-i="'+i+'"][data-j="'+j+'"]',vue);
+        if(!bouton||bouton.disabled) break;
+        const ligne=bouton.closest('.series');
+        if ([...bouton.closest('.bloc-serie').querySelectorAll('input')].some(el=>!el.validity.valid)) throw Error('Vérifiez les valeurs de cette série.');
         const y=x.series[Number(j)];
+        if(act==='valider'&&!y.faite&&mode(x)==='charge'&&y.kg===0) {
+          modal('Valider à 0 kg ?', '<p>La charge enregistrée pour cette série sera de 0 kg.</p>'+bout('Valider à 0 kg','valider-zero','data-i="'+i+'" data-j="'+j+'"','primary'));
+          break;
+        }
+        if(act==='valider-zero') dialogue.close();
+        const ancien={faite:y.faite,jeton:y.reposJeton,fin:s.reposFin,origine:s.reposJeton,guide:s.guideIndex};
+        bouton.disabled=true;
         if(s.semaineJour!==undefined&&s.guideIndex===undefined) s.guideIndex=Number(i);
         y.faite=!y.faite;
         if(y.faite) {
@@ -724,12 +771,21 @@ document.addEventListener('click',async ev=>{
           s.reposFin=0;
           s.reposJeton=undefined;
         }
+        await sauver();
+        bouton.disabled=false;
+        if(verrou) {
+          y.faite=ancien.faite;y.reposJeton=ancien.jeton;s.reposFin=ancien.fin;s.reposJeton=ancien.origine;s.guideIndex=ancien.guide;
+          break;
+        }
+        if(!bouton.isConnected) break;
         $('[data-mode-i="'+i+'"]').disabled=x.series.some(y=>y.faite);
-        b.setAttribute('aria-pressed',String(y.faite));
-        const raccourci=$('[data-act="reprendre-serie"]',b.closest('.bloc-serie'));
+        bouton.setAttribute('aria-pressed',String(y.faite));
+        const raccourci=$('[data-act="reprendre-serie"]',bouton.closest('.bloc-serie'));
         if(raccourci) raccourci.hidden=y.faite;
+        const ajustement=$('.charge-ajustement',bouton.closest('.bloc-serie'));
+        if(ajustement) ajustement.hidden=y.faite;
         ligne.classList.toggle('done',y.faite);
-        sauver();horloges();etapeGuide();break;
+        horloges();etapeGuide();break;
       }
       case 'repos-moins':
       case 'repos-plus': {
@@ -787,14 +843,27 @@ document.addEventListener('click',async ev=>{
       case 'editer-seance': editerSeance(etat.seances.find(a=>a.id===id));break;
       case 'supprimer-seance': confirmation('Supprimer la séance ?','Les statistiques seront recalculées.','supprimer-seance-ok',id);break;
       case 'supprimer-seance-ok': etat.seances=etat.seances.filter(a=>a.id!==id);dialogue.close();actualiser();break;
-      case 'export': fichier(etat,'');message('Sauvegarde JSON téléchargée.');break;
+      case 'poids-ajouter':
+        if(!ajouterPoids(etat,$('#poids-date').value,$('#poids-kg').value,editionPoids)) throw Error('Choisis une date valide et saisis un poids entre 20 et 400 kg.');
+        editionPoids='';actualiser();message('Pesée enregistrée.');break;
+      case 'poids-editer': editionPoids=id;afficher();$('#poids-kg')?.focus();break;
+      case 'poids-annuler': editionPoids='';afficher();break;
+      case 'poids-suppr': confirmation('Supprimer cette pesée ?','Cette valeur sera retirée de la courbe et de l’historique.','poids-suppr-ok',id);break;
+      case 'poids-suppr-ok': supprimerPoids(etat,id);editionPoids='';dialogue.close();actualiser();break;
+      case 'export': {
+        const exporte=sauvegardePhotos({...etat,derniereSauvegarde:Date.now()},$('#photos-sauvegarde')?.value==='oui');
+        fichier(exporte,'');etat.derniereSauvegarde=exporte.derniereSauvegarde;sauver();message('Sauvegarde JSON téléchargée.');break;
+      }
       case 'export-csv': telecharger(csvSeances(etat.seances),'-seances','csv','text/csv;charset=utf-8');message('Séances exportées en CSV.');break;
       case 'export-chiffre': {
         b.disabled=true;
         try {
-          const protection=await chiffrer(etat);
+          const exporte=sauvegardePhotos({...etat,derniereSauvegarde:Date.now()},$('#photos-sauvegarde')?.value==='oui');
+          const protection=await chiffrer(exporte);
           modal('Votre code de récupération','<p>Copiez ce code et conservez-le séparément du fichier. Le code sera retiré de l’écran à la fermeture.</p><p class="recovery-code">'+e(protection.code)+'</p>'+bout('Télécharger le fichier chiffré','telecharger-chiffre','','primary'));
-          $('#dialogue [data-act="telecharger-chiffre"]').addEventListener('click',()=>fichier(protection.fichier,'-chiffre'));
+          $('#dialogue [data-act="telecharger-chiffre"]').addEventListener('click',()=>{
+            fichier(protection.fichier,'-chiffre');etat.derniereSauvegarde=exporte.derniereSauvegarde;sauver();
+          });
         } finally {b.disabled=false;}
         break;
       }
@@ -895,8 +964,28 @@ dialogue.addEventListener('submit',async ev=>{
       if(['nom','muscle','materiel'].some(k=>!val(k)))throw Error('Remplissez le nom, le groupe musculaire et le matériel.');
       const x={id:form.dataset.id||uuid(),nom:val('nom'),muscle:val('muscle'),materiel:val('materiel'),conseil:val('conseil')};
       if(!form.dataset.id&&etat.persos.length>=1000)throw Error('Limite de 1 000 exercices personnels atteinte.');
-      etat.persos=[...etat.persos.filter(a=>a.id!==x.id),x];
-      filtre={nom:'',muscle:'',materiel:'',lieu:'',categorie:'',collection:'personnels'};
+      const machine=form.dataset.machine==='true';
+      if(machine) {
+        const submit=form.querySelector('button');
+        submit.disabled=true;
+        try {
+          const ancienne=parId(x.id);
+          const photo=data.get('photo');
+          x.machine=true;x.zone=val('zone');x.lieu='Salle';
+          if(photo?.size) x.photo=await preparerPhoto(photo);
+          else if(val('photo-actuelle')!=='retirer'&&ancienne?.photo) x.photo=ancienne.photo;
+        } finally {submit.disabled=false;}
+        if(!form.isConnected) return;
+      }
+      const fiches=[...etat.persos.filter(a=>a.id!==x.id),x];
+      if(!limitePhotos(fiches)) throw Error('Le carnet a atteint sa limite de photos. Retire une photo existante pour continuer.');
+      const anciennes=etat.persos;
+      etat.persos=fiches;
+      if(machine) {
+        try {await sauverImport();}
+        catch(erreur) {etat.persos=anciennes;throw erreur;}
+      }
+      filtre={nom:'',muscle:'',materiel:'',lieu:'',categorie:'',collection:machine?'machines':'personnels'};
       limiteCatalogue=30;
     }
     if(form.dataset.form==='import') {
@@ -904,7 +993,7 @@ dialogue.addEventListener('submit',async ev=>{
       submit.disabled=true;
       try {
         form.querySelector('[data-import-etat]').textContent='Lecture du fichier…';
-        const parsed=await lireImport(form,32_000_000);
+        const parsed=await lireImport(form,tailleSauvegardeMax);
         if(parsed?.format==='cadence-semaine-v1') throw Error('C’est une semaine type. Ouvre Ma semaine → Importer ma semaine.');
         const verifie=verifier(parsed?.format==='cadence-chiffre-v1'?await dechiffrer(parsed,form.elements.code.value.trim()):parsed);
         if(!form.isConnected)return;
@@ -945,7 +1034,8 @@ try {
       .then(()=>indiquerHorsLigne('Carnet prêt hors ligne. Les vidéos se téléchargent séparément.'))
       .catch(()=>indiquerHorsLigne('Préparation hors ligne indisponible. Réessaie en ouvrant Cadence avec du réseau.'));
   } else indiquerHorsLigne('Le mode hors ligne est indisponible dans ce navigateur.');
-} catch {
+} catch (erreur) {
+  console.error('Démarrage de Cadence indisponible',erreur);
   vue.innerHTML=titre('STOCKAGE LOCAL','Carnet indisponible','Le navigateur a bloqué l’ouverture du stockage local. Rechargez après avoir autorisé le stockage pour ce site.');
 }
 

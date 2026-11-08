@@ -4,18 +4,18 @@ const familles = [
     ['Poussée horizontale','dc','dc-halteres','chest-press','pom']
   ]],
   ['Écarté des pectoraux',[
-    ['Écarté','ec','ecarte-halteres']
+    ['Écarté','ec','ecarte-halteres','papillon-machine']
   ]],
   ['Tirage du dos',[
     ['Tirage vertical','tir','tir-neutre','tra','tra-assistees','tra-lestees','tractions-supination'],
-    ['Tirage horizontal','row','rowh','rowing-poulie','rowing-poitrine','tirage-inverse'],
+    ['Tirage horizontal','row','rowh','rowing-poulie','rowing-poitrine','rowing-machine-poitrine','tirage-inverse'],
     ['Tirage bras tendus','tirage-bras-tendus']
   ]],
   ['Travail des épaules',[
     ['Élévation latérale','lat','lat-poulie'],
     ['Écarté inversé','inv'],
     ['Tirage vers le visage','face-pull'],
-    ['Poussée au-dessus de la tête','mil','mil-halteres']
+    ['Poussée au-dessus de la tête','mil','mil-halteres','developpe-epaules-machine']
   ]],
   ['Travail des triceps',[
     ['Extension vers le bas','tri','tri-barre'],
@@ -40,15 +40,38 @@ const familles = [
   ]],
   ['Extension de hanche',[
     ['Soulevé de terre','st','st-hex','charniere-kettlebell'],
-    ['Extension du bassin sur banc','hip']
+    ['Poussée de hanches','hip','hip-machine']
   ]],
   ['Extension des mollets',[
-    ['Extension des mollets','mol','mollets-corps']
+    ['Extension des mollets genoux peu fléchis','mol','mollets-corps','mollets-presse'],
+    ['Extension des mollets genoux fléchis','mollets-assis']
   ]],
   ['Travail du tronc',[
-    ['Enroulement du buste','cr','cr-poulie'],
+    ['Enroulement du buste','cr','cr-poulie','cr-machine'],
     ['Relevé des jambes','gen','releve-jambes'],
     ['Gainage','planche','touches-epaules','extension-opposee']
+  ]],
+  ['Rotation du buste',[
+    ['Rotation assise guidée','rotation-assise'],
+    ['Rotation debout à la poulie','rotation-poulie']
+  ]],
+  ['Extension du dos',[
+    ['Extension assise guidée','lombaires-machine'],
+    ['Extension du buste sur banc','lombaires-banc']
+  ]],
+  ['Adduction de hanche',[
+    ['Adduction assise','adducteurs-machine'],
+    ['Adduction debout','adducteurs-poulie']
+  ]],
+  ['Abduction de hanche',[
+    ['Abduction assise','abducteurs-machine'],
+    ['Abduction debout','abducteurs-poulie']
+  ]],
+  ['Flexion du poignet',[
+    ['Flexion du poignet','poignets-flexion']
+  ]],
+  ['Extension du poignet',[
+    ['Extension du poignet','poignets-extension']
   ]]
 ];
 
@@ -67,7 +90,19 @@ const machines = new Map([
   ['mol','Machine à mollets'],
   ['inv','Machine d’écarté inversé'],
   ['leg-hack','Machine à chariot'],
-  ['tra-assistees','Machine à tractions assistées']
+  ['tra-assistees','Machine à tractions assistées'],
+  ['rotation-assise','Machine de rotation du buste'],
+  ['cr-machine','Machine à abdominaux'],
+  ['lombaires-machine','Machine d’extension du dos'],
+  ['lombaires-banc','Banc à lombaires'],
+  ['adducteurs-machine','Machine d’adduction des hanches'],
+  ['abducteurs-machine','Machine d’abduction des hanches'],
+  ['mollets-assis','Machine à mollets assis'],
+  ['mollets-presse','Presse à cuisses'],
+  ['rowing-machine-poitrine','Machine de tirage horizontal'],
+  ['developpe-epaules-machine','Machine de développé épaules'],
+  ['papillon-machine','Machine papillon'],
+  ['hip-machine','Machine à poussée de hanches']
 ]);
 const mesureChronometree = mesure => mesure === 'duree' || mesure === 'distance';
 
@@ -83,7 +118,7 @@ function stations(exercice) {
   if (/barre (de traction|fixe|basse)|anneaux/.test(equipement)) trouves.push('Barres de traction et supports');
   if (/barres parallèles/.test(equipement)) trouves.push('Barres parallèles');
   if (/cage|rack|supports|sécurités/.test(equipement)) trouves.push('Rack et barre');
-  if (/banc/.test(equipement)) trouves.push('Bancs');
+  if (/banc/.test(equipement) && exercice.id!=='lombaires-banc') trouves.push('Bancs');
   if (/haltère/.test(equipement)) trouves.push('Haltères');
   if (/^barre/.test(materiel)) trouves.push(exercice.materiel);
   if (trouves.length===0 && materiel && !/poids du corps|aucun matériel|sans matériel/.test(materiel)) {

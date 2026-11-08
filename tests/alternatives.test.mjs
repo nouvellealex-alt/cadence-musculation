@@ -8,8 +8,8 @@ const trouver = id => catalogue.find(exercice=>exercice.id===id);
 test('une poulie prise laisse une alternative au sol pour le crunch',()=>{
   const crunch = {id:'cr-poulie',nom:'Crunch à la poulie',muscle:'Abdominaux',materiel:'Poulie',equipement:'Poulie haute et corde'};
   const options = alternatives(crunch,[...catalogue,crunch],[poste(crunch)]);
-  const exercice = options[0]?.exercice;
-  assert.equal(exercice?.id,'cr');
+  assert.ok(options.some(({exercice})=>exercice.id==='cr'));
+  assert.equal(options[0]?.exercice.id,'cr-machine');
   assert.ok(options.every(({exercice})=>exercice.mesure!=='duree'));
 });
 
@@ -52,4 +52,38 @@ test('une donnée de matériel héritée mal formée ne casse pas les substituti
   const ex={id:'perso',nom:'Poussée personnelle',muscle:'Pectoraux',materiel:'Barre',equipement:123};
   assert.equal(poste(ex),'Barre');
   assert.doesNotThrow(()=>alternatives(ex,catalogue,['Barre']));
+});
+
+
+test('la rotation à la poulie reste une variante de rotation et exclut les crunchs',()=>{
+  const exercice=trouver('rotation-assise');
+  const options=alternatives(exercice,catalogue,[poste(exercice)]);
+  assert.deepEqual(options.map(x=>x.exercice.id),['rotation-poulie']);
+  assert.match(options[0].raison,/variante différente/);
+});
+
+test('l’adduction et l’abduction ne se remplacent pas',()=>{
+  for(const [machine,poulie] of [['adducteurs-machine','adducteurs-poulie'],['abducteurs-machine','abducteurs-poulie']]) {
+    const exercice=trouver(machine);
+    const options=alternatives(exercice,catalogue,[poste(exercice)]);
+    assert.deepEqual(options.map(x=>x.exercice.id),[poulie]);
+  }
+});
+
+test('flexion et extension du poignet ne sont pas des substitutions',()=>{
+  assert.deepEqual(alternatives(trouver('poignets-flexion'),catalogue),[]);
+  assert.deepEqual(alternatives(trouver('poignets-extension'),catalogue),[]);
+});
+
+test('une presse occupée exclut aussi les mollets à la presse',()=>{
+  const pre=trouver('pre');
+  const mol=trouver('mollets-presse');
+  assert.equal(poste(pre),poste(mol));
+  assert.ok(alternatives(mol,catalogue,[poste(pre)]).some(x=>x.exercice.id==='mol'));
+});
+
+test('le rowing aux haltères dispose d’un tirage à la machine sans banc',()=>{
+  const options=alternatives(trouver('rowing-poitrine'),catalogue,['Bancs','Poulies','Rack et barre','Barre']);
+  assert.equal(options[0]?.exercice.id,'rowing-machine-poitrine');
+  assert.match(options[0].raison,/Tirage horizontal/);
 });

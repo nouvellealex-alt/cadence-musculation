@@ -69,7 +69,32 @@ const poses = {
   presseAssiseBas:'81,49 88,69 94,116 81,94 102,79 132,116 134,157',
   presseAssiseHaut:'81,49 88,69 94,116 113,75 139,77 132,116 134,157',
   brasTendusHaut:'108,45 106,65 117,107 91,77 74,84 115,133 117,158',
-  brasTendusBas:'108,45 106,65 117,107 106,89 104,115 115,133 117,158'
+  brasTendusBas:'108,45 106,65 117,107 106,89 104,115 115,133 117,158',
+  rotAssis:'109,48 109,66 109,107 88,78 94,91 93,118 92,155',
+  rotAssisTourne:'93,48 96,66 109,107 69,79 79,91 93,118 92,155',
+  rotCable:'97,42 99,63 110,102 81,76 66,82 101,130 95,155',
+  rotCableTourne:'119,42 117,63 110,102 136,73 150,79 101,130 95,155',
+  crunchGuideHaut:'90,50 92,70 99,114 103,86 116,80 130,117 133,154',
+  crunchGuideBas:'112,79 107,94 99,114 121,100 128,93 130,117 133,154',
+  extensionAssiseBas:'122,66 112,82 101,118 123,101 126,115 137,122 140,153',
+  extensionAssiseHaut:'92,52 94,73 101,118 109,94 126,115 137,122 140,153',
+  extensionBancBas:'57,119 69,111 106,103 62,127 58,126 133,128 157,154',
+  extensionBancHaut:'67,59 79,76 106,103 80,95 75,98 133,128 157,154',
+  hanchesEcartees:'110,40 110,61 110,109 83,89 75,102 75,118 78,153',
+  hanchesRapprochees:'110,40 110,61 110,109 88,89 91,102 99,118 98,153',
+  hancheCableProche:'111,40 110,62 110,104 131,83 149,84 102,130 101,157',
+  hancheCableEcartee:'111,40 110,62 110,104 131,83 149,84 79,128 65,151',
+  molletsAssisBas:'96,48 97,70 102,111 102,94 130,107 132,115 130,153',
+  molletsAssisHaut:'96,48 97,70 102,111 102,94 130,103 132,111 132,144',
+  molletsPresseBas:'62,104 75,116 105,139 87,132 105,130 139,111 161,87',
+  molletsPresseHaut:'62,104 75,116 105,139 87,132 105,130 143,107 165,83',
+  poignetBas:'86,67 94,85 103,123 106,115 137,126 136,126 139,156',
+  tirageGuideLoin:'110,53 111,74 111,116 89,81 60,83 88,128 89,158',
+  tirageGuidePres:'110,53 111,74 111,116 130,83 102,81 88,128 89,158',
+  epaulesGuideBas:'104,46 105,66 110,113 83,78 82,54 132,124 135,158',
+  epaulesGuideHaut:'104,46 105,66 110,113 88,48 84,23 132,124 135,158',
+  papillonOuvert:'110,48 110,68 110,109 77,76 56,69 94,125 93,155',
+  papillonFerme:'110,48 110,68 110,109 96,81 106,90 94,125 93,155'
 };
 
 const fiche = (a,b,materiel,zone,secondaires,erreur) => ({a,b,materiel,zone,secondaires,erreur});
@@ -123,7 +148,24 @@ export const mouvements = {
   'face-pull':fiche('faceDepart','faceFin','cable-face','epaules','Haut du dos','Gardez le buste stable.'),
   'chest-press':fiche('presseAssiseBas','presseAssiseHaut','presse-assise','torse','Triceps, épaules','Gardez le dos contre le dossier.'),
   'tirage-bras-tendus':fiche('brasTendusHaut','brasTendusBas','poulie-barre','dos','Triceps','Gardez les coudes souples.'),
-  'tri-haut-halteres':fiche('triHautBas','triHautHaut','halteres','triceps','—','Contrôlez la descente.')
+  'tri-haut-halteres':fiche('triHautBas','triHautHaut','halteres','triceps','—','Contrôlez la descente.'),
+  'rotation-assise':fiche('rotAssis','rotAssisTourne','rotation-assise','abdos','Abdominaux','Tournez avec contrôle.'),
+  'rotation-poulie':fiche('rotCable','rotCableTourne','rotation-cable','abdos','Abdominaux','Utilisez une charge maîtrisable.'),
+  'cr-machine':fiche('crunchGuideHaut','crunchGuideBas','crunch-guide','abdos','—','Rapprochez les côtes du bassin.'),
+  'lombaires-machine':fiche('extensionAssiseBas','extensionAssiseHaut','extension-assise','dos','Fessiers','Évitez de forcer la cambrure.'),
+  'lombaires-banc':fiche('extensionBancBas','extensionBancHaut','banc-lombaires','dos','Fessiers, ischio-jambiers','Arrêtez-vous dans l’alignement.'),
+  'adducteurs-machine':fiche('hanchesEcartees','hanchesRapprochees','adducteurs-guide','cuisses','—','Contrôlez l’ouverture.'),
+  'abducteurs-machine':fiche('hanchesRapprochees','hanchesEcartees','abducteurs-guide','hanche','Fessiers','Gardez le bassin stable.'),
+  'adducteurs-poulie':fiche('hancheCableEcartee','hancheCableProche','hanche-cable','cuisses','—','Utilisez un appui stable.'),
+  'abducteurs-poulie':fiche('hancheCableProche','hancheCableEcartee','hanche-cable-inverse','hanche','Fessiers','Utilisez un appui stable.'),
+  'mollets-assis':fiche('molletsAssisBas','molletsAssisHaut','mollets-assis','mollets','—','Évitez les rebonds.'),
+  'mollets-presse':fiche('molletsPresseBas','molletsPresseHaut','mollets-presse','mollets','—','Gardez les genoux stables.'),
+  'poignets-flexion':fiche('poignetBas','poignetBas','poignet-paume','avant-bras','—','Gardez l’avant-bras en appui.'),
+  'poignets-extension':fiche('poignetBas','poignetBas','poignet-dos','avant-bras','—','Gardez l’avant-bras en appui.'),
+  'rowing-machine-poitrine':fiche('tirageGuideLoin','tirageGuidePres','tirage-guide','dos','Biceps, arrière des épaules','Gardez la poitrine en appui.'),
+  'developpe-epaules-machine':fiche('epaulesGuideBas','epaulesGuideHaut','epaules-guide','epaules','Triceps','Gardez le dos contre le dossier.'),
+  'papillon-machine':fiche('papillonOuvert','papillonFerme','papillon-guide','torse','Épaules','Réglez l’amplitude de départ.'),
+  'hip-machine':fiche('bassinBas','bassinHaut','poussee-hanches-guide','hanche','Ischio-jambiers','Vérifiez le verrouillage.')
 };
 
 export function dessin(f, position=0, miniature=false) {
@@ -136,7 +178,15 @@ export function dessin(f, position=0, miniature=false) {
   const barre = point => rail(e(point,-20,0),e(point,20,0))+rond(e(point,-17,0),7,'#7188a4')+rond(e(point,17,0),7,'#7188a4');
   const banc = (a,b) => rail(a,b)+rail(a,[a[0],160])+rail(b,[b[0],160]);
   const pieds = (a,b) => rail(a,b)+rail(a,e(a,-6,65))+rail(b,e(b,6,65));
-  let devant='', derriere='';
+  const siege = (x,y) => banc([x-14,y],[x+15,y]);
+  const pile = (x,y) => rail([x,y],[x,159])+rail([x-7,155],[x+7,155])+rail([x-7,149],[x+7,149])+rail([x-7,143],[x+7,143]);
+  // Petit repère vu de dessus : bassin fixe et épaules en rotation.
+  const repereRotation = '<circle cx="187" cy="41" r="20" fill="#14263a" stroke="#355575"/>'+
+    ligne([[175,47],[199,47]],'#7b95b4',3)+
+    ligne(position?[[177,35],[197,44]]:[[175,38],[199,38]],'#8ad2ff',4)+
+    '<path d="M178 27q10-5 18 2m-4-3 4 3-5 1" fill="none" stroke="#8ad2ff" stroke-width="1.6"/>';
+  const disque = point => rail(e(point,-8,0),e(point,8,0))+rond(e(point,-8,0),4,'#7188a4')+rond(e(point,8,0),4,'#7188a4');
+  let devant='', derriere='', pointe=e(p,10,1);
   let brasArriere = [e(s,9,3),e(c,11,-1),e(m,13,0)];
   let jambeArriere = [e(h,8,2),e(g,11,1),e(p,12,0)];
   switch (f.materiel) {
@@ -191,6 +241,67 @@ export function dessin(f, position=0, miniature=false) {
       jambeArriere=[e(h,8,2),position?[90,127]:[132,131],position?[66,151]:[154,153]];
       brasArriere=[e(s,9,3),position?[88,87]:[120,87],position?[82,73]:[135,96]];
       break;
+    case 'rotation-assise':
+      derriere=siege(110,118)+pile(159,54)+rail([133,65],[133,117]);
+      jambeArriere=[e(h,8,1),[126,118],[128,155]];
+      brasArriere=[e(s,14,2),e(c,38,-1),e(m,29,0)];
+      devant=rail(e(s,-19,4),e(s,19,4))+rail(e(m,-1,-7),e(m,0,2))+repereRotation;break;
+    case 'rotation-cable':
+      derriere=pile(43,41);devant=cable([43,80],m)+rail(e(m,-2,-3),e(m,3,2))+repereRotation;
+      jambeArriere=[e(h,8,0),[124,130],[131,157]];break;
+    case 'crunch-guide':
+      derriere=siege(98,126)+rail([81,62],[89,126])+pile(158,44);
+      devant=rail([158,81],m)+rail(e(s,-8,7),e(s,9,7));break;
+    case 'extension-assise':
+      derriere=siege(101,127)+pile(65,45)+rail([140,158],[157,158]);
+      devant=rail([65,98],e(s,-8,5))+rond(e(s,-8,5),6,'#7188a4');break;
+    case 'banc-lombaires':
+      derriere=rail([104,111],[161,159])+rail([104,111],[89,159])+rail([89,159],[171,159]);
+      devant=rail([98,109],[111,100])+rail([151,150],[167,147]);break;
+    case 'adducteurs-guide':
+    case 'abducteurs-guide': {
+      const autreGenou=[220-g[0],g[1]];
+      derriere=siege(110,119)+pile(167,58)+rail([109,66],[109,118]);
+      jambeArriere=[e(h,8,1),autreGenou,[220-p[0],p[1]]];
+      brasArriere=[e(s,14,0),[132,90],[220-m[0],m[1]]];
+      const versInterieur=f.materiel==='adducteurs-guide'?1:-1;
+      const coussin=e(g,5*versInterieur,0), oppose=e(autreGenou,-5*versInterieur,0);
+      devant=rail([110,135],coussin)+rail([110,135],oppose)+rond(coussin,5,'#7188a4')+rond(oppose,5,'#7188a4');break;
+    }
+    case 'hanche-cable':
+    case 'hanche-cable-inverse': {
+      const source=f.materiel==='hanche-cable-inverse'?[163,151]:[43,151];
+      derriere=pile(source[0],51)+rail([148,85],[148,158]);
+      jambeArriere=[e(h,8,1),[122,130],[123,157]];
+      devant=cable(source,e(p,0,-3))+rail(e(p,-4,-4),e(p,4,-4));break;
+    }
+    case 'mollets-assis':
+      pointe=[146,152];
+      derriere=siege(103,119)+rail([141,155],[169,155])+rail([163,129],[163,158]);
+      devant=rail([163,129],e(g,1,-5))+rail(e(g,-9,-5),e(g,9,-5));break;
+    case 'mollets-presse':
+      pointe=e(p,4,-9);
+      derriere=banc([51,101],[112,150])+rail([174,56],[123,157])+rail(e(pointe,-8,-12),e(pointe,8,12));break;
+    case 'poignet-paume':
+    case 'poignet-dos': {
+      derriere=siege(101,132)+banc([113,121],[135,121]);
+      const main=e(m,10,position?-9:7);
+      const cote=f.materiel==='poignet-paume'?-4:4;
+      devant=ligne([m,main],'#aebfd0',5)+disque(main)+rond(e(main,-4,cote),2,'#8ad2ff');break;
+    }
+    case 'tirage-guide':
+      derriere=siege(113,123)+rail([99,78],[99,122])+pile(52,39);
+      devant=rail([52,60],m)+rail(e(m,0,-5),e(m,0,5));break;
+    case 'epaules-guide':
+      derriere=siege(110,121)+rail([111,64],[111,121])+pile(158,35);
+      devant=rail([59,54],m)+rail(e(m,-7,0),e(m,7,0));break;
+    case 'papillon-guide':
+      derriere=siege(110,120)+rail([110,65],[110,120])+pile(164,50);
+      brasArriere=[e(s,14,1),[220-c[0],c[1]],[220-m[0],m[1]]];
+      devant=rail([65,45],m)+rail([155,45],brasArriere[2]);break;
+    case 'poussee-hanches-guide':
+      derriere=banc([44,116],[80,116])+rail([140,161],[174,161])+pile(180,78);
+      devant=rail([176,119],e(h,0,-7))+rail(e(h,-11,-7),e(h,11,-7));break;
     case 'tapis': derriere=ligne([[34,158],[186,158]],'#335f85',7);break;
   }
   const zone = f.zone;
@@ -201,7 +312,7 @@ export function dessin(f, position=0, miniature=false) {
   const contenu = ligne([[25,163],[195,163]],'#31455b',2)+derriere+
     ligne(jambeArriere,cuisse?clair:grisFond,9)+ligne(brasArriere,bras?clair:grisFond,7)+
     ligne([h,g,p],zone==='mollets'?bleu:gris,10)+ligne([h,g],cuisse?bleu:gris,11)+
-    ligne([h,s],torse?bleu:gris,17)+ligne([s,c,m],bras?bleu:gris,8)+
-    ligne([p,e(p,10,1)],gris,7)+rond(t,10,gris)+devant;
+    ligne([h,s],torse?bleu:gris,17)+ligne([s,c,m],bras?bleu:gris,8)+(zone==='avant-bras'?ligne([c,m],bleu,7):'')+
+    ligne([p,pointe],gris,7)+rond(t,10,gris)+devant;
   return '<svg class="mouvement" viewBox="0 0 220 178" '+(miniature?'aria-hidden="true"':'role="img" aria-label="Schéma de la position '+(position?'finale':'initiale')+'"')+'><rect width="220" height="178" rx="12" fill="#101c2c"/><path d="M16 34h22m-11-11v22m155 98h22m-11-11v22" stroke="#254565"/>'+contenu+'</svg>';
 }

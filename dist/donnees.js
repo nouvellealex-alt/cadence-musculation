@@ -2,12 +2,14 @@ import { catalogue } from './exercices.js';
 import { mesureValide, mode, types, groupesSuperset, verifierCibleRoutine, volumeSerie, groupeMesure, mesureProgression } from './journal.js';
 import { verifierPlanning } from './planning.js';
 import { verifierSemaine } from './semaine.js';
+import { verifierPoids } from './poids.js';
+import { ficheMachineValide, limitePhotos } from './machines.js';
 const schema = 1;
 let db;
 
 export const uuid = () => crypto.randomUUID();
 export const serie = (reps = 8, kg = 0) => ({kg,reps,type:'Travail',faite:false});
-export const nouveau = () => ({schema,profil:uuid(),theme:'sombre',repos:90,actif:null,seances:[],routines:[],persos:[]});
+export const nouveau = () => ({schema,profil:uuid(),theme:'sombre',repos:90,actif:null,seances:[],routines:[],persos:[],poids:[]});
 
 export async function ouvrir() {
   const request = indexedDB.open('cadence-musculation', 1);
@@ -77,7 +79,7 @@ export function verifier(a) {
   const ids = new Set(catalogue.map(x=>x.id));
   const routine = x => x && nom(x.id) && nom(x.nom) && liste(x.exercices,60,e=>verifierCibleRoutine(e,ids)) && x.exercices.length > 0;
   const invalide = () => { throw Error('Cette sauvegarde est incomplète ou incompatible.'); };
-  if (!a || a.schema !== schema || !nom(a.profil) || !['clair','sombre'].includes(a.theme) || !entier(a.repos,0,600) || !liste(a.persos,1000,ex) || !uniques(a.persos)) invalide();
+  if (!a || a.schema !== schema || !nom(a.profil) || !['clair','sombre'].includes(a.theme) || !entier(a.repos,0,600) || !liste(a.persos,1000,x=>ex(x)&&ficheMachineValide(x)) || !uniques(a.persos) || !limitePhotos(a.persos)) invalide();
   for (const e of a.persos) {
     if (ids.has(e.id)) invalide();
     ids.add(e.id);
@@ -88,18 +90,37 @@ export function verifier(a) {
   const planning = verifierPlanning(a.planning,ids);
   const semaine = verifierSemaine(a.semaine,ids);
   const {profil,theme,repos,actif,seances,routines,persos} = a;
-  return {schema,profil,theme,repos,actif,seances,routines,persos,favorisEx,planning,semaine};
+  const poids=verifierPoids(a.poids);
+  const derniereSauvegarde=date(a.derniereSauvegarde)?a.derniereSauvegarde:undefined;
+  return {schema,profil,theme,repos,actif,seances,routines,persos,favorisEx,planning,semaine,poids,derniereSauvegarde};
 }
 
 const encoder = new TextEncoder();
-const hex = bytes => Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
-const dehex = h => Uint8Array.from(h.match(/../g).map(b=>parseInt(b,16)));
+export const tailleSauvegardeMax = 96_000_000;
+const codesHex=Array.from({length:256},(_,n)=>n.toString(16).padStart(2,'0'));
+function hex(bytes) {
+  const blocs=[];
+  for(let i=0;i<bytes.length;i+=8192) {
+    const bloc=[];
+    for(let j=i;j<Math.min(i+8192,bytes.length);j++) bloc.push(codesHex[bytes[j]]);
+    blocs.push(bloc.join(''));
+  }
+  return blocs.join('');
+}
+function dehex(h) {
+  const valeur=c=>c<=57?c-48:c-87;
+  const bytes=new Uint8Array(h.length/2);
+  for(let i=0;i<bytes.length;i++) bytes[i]=valeur(h.charCodeAt(2*i))*16+valeur(h.charCodeAt(2*i+1));
+  return bytes;
+}
 const contexte = encoder.encode('Cadence sauvegarde v1');
 export async function chiffrer(etat) {
+  const contenu=encoder.encode(JSON.stringify(etat));
+  if(2*contenu.length+256>tailleSauvegardeMax) throw Error('Ce carnet dépasse la taille de la sauvegarde chiffrée. Essaie l’export JSON sans photos.');
   const secret = crypto.getRandomValues(new Uint8Array(32));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const cle = await crypto.subtle.importKey('raw',secret,'AES-GCM',false,['encrypt']);
-  const octets = await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:contexte},cle,encoder.encode(JSON.stringify(etat)));
+  const octets = await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:contexte},cle,contenu);
   return {code:hex(secret).match(/.{8}/g).join('-'),fichier:{format:'cadence-chiffre-v1',iv:hex(iv),contenu:hex(new Uint8Array(octets))}};
 }
 export async function dechiffrer(fichier, code) {

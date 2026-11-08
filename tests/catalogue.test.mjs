@@ -42,3 +42,18 @@ test('chaque exercice dispose d’un visuel et chaque fichier tiers a une attrib
   assert.deepEqual(assets,dossiers);
 });
 
+
+
+test('les nouveaux exercices en salle ont deux positions distinctes',()=>{
+  const ids='rotation-assise rotation-poulie cr-machine lombaires-machine lombaires-banc adducteurs-machine abducteurs-machine adducteurs-poulie abducteurs-poulie mollets-assis mollets-presse poignets-flexion poignets-extension rowing-machine-poitrine developpe-epaules-machine papillon-machine hip-machine'.split(' ');
+  for(const id of ids) {
+    const ex=catalogue.find(x=>x.id===id);
+    assert.ok(ex?.equipement&&ex?.conseil&&ex?.vigilance,id);
+    const mouvement=mouvements[id];
+    assert.ok(mouvement,id);
+    const a=dessin(mouvement,0,true), b=dessin(mouvement,1,true);
+    assert.ok(a.startsWith('<svg')&&b.startsWith('<svg'),id);
+    assert.notEqual(a,b,id);
+    assert.doesNotMatch(a+b,/undefined|NaN/,id);
+  }
+});
