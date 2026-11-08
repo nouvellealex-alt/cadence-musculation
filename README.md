@@ -23,9 +23,9 @@ Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de
 
 ## Ma semaine
 
-Dans **Ma semaine**, créez une semaine vide ou importez un fichier de semaine Cadence. Choisissez les exercices, les fourchettes de répétitions et de repos pour chaque jour. La semaine type reste dans le navigateur et est incluse dans la sauvegarde du carnet. L’interface met en évidence l’exercice à faire et laisse le repos visible.
+Dans **Ma semaine**, créez une semaine vide ou importez un fichier de semaine Cadence. Choisissez les exercices, les fourchettes de répétitions et de repos pour chaque jour. La semaine type reste dans le navigateur et est incluse dans la sauvegarde du carnet. En séance guidée, Cadence affiche un exercice à la fois, garde le repos visible et reprend sur l’exercice consulté après fermeture. La série précédente se reprend en un geste.
 
-Si un poste est occupé, **Machine indisponible** propose des mouvements compatibles avec le matériel restant. Le remplacement vaut pour la séance en cours, conserve les séries déjà validées et laisse la nouvelle charge à saisir.
+Si un poste est occupé, **Machine indisponible** propose des mouvements proches avec le matériel restant. Choisissez le poste concerné si l’exercice utilise plusieurs équipements. La recherche manuelle depuis cette fenêtre respecte aussi cette exclusion. Le remplacement vaut pour la séance en cours, conserve les séries déjà validées et laisse la nouvelle charge à saisir. Sur les appareils compatibles, **Écran allumé** évite la mise en veille pendant la séance guidée.
 
 ## Organisation du projet
 

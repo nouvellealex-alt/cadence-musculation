@@ -39,3 +39,17 @@ test('les recherches par muscle écartent un exercice d’une autre catégorie',
   const options = alternatives(exercice,catalogue);
   assert.ok(options.every(({exercice:candidat})=>candidat.categorie==='Musculation'));
 });
+
+test('en salle, le geste passe avant le type de lieu',()=>{
+  const tirage=trouver('tir-neutre');
+  const options=alternatives(tirage,catalogue,[poste(tirage)],true);
+  const premierHorizontal=options.findIndex(x=>x.raison.includes('variante différente'));
+  assert.ok(options.some(x=>x.exercice.id==='tra'));
+  if(premierHorizontal!==-1) assert.ok(options.slice(premierHorizontal).every(x=>!x.raison.includes('même geste')));
+});
+
+test('une donnée de matériel héritée mal formée ne casse pas les substitutions',()=>{
+  const ex={id:'perso',nom:'Poussée personnelle',muscle:'Pectoraux',materiel:'Barre',equipement:123};
+  assert.equal(poste(ex),'Barre');
+  assert.doesNotThrow(()=>alternatives(ex,catalogue,['Barre']));
+});

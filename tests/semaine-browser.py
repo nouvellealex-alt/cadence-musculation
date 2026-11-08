@@ -16,7 +16,7 @@ semaine = {
         "active": True,
         "objectif": "Objectif fictif de test",
         "jours": [
-            {"nom":"Départ test", "exercices":[cible("di",8,12,120)]},
+            {"nom":"Départ test", "exercices":[cible("di",8,12,120),cible("dc",6,8,120)]},
             {"nom":"Repos", "exercices":[]},
             {"nom":"Jambes de test", "exercices":[cible("pre",10,15,120)]},
             {"nom":"Repos", "exercices":[]},
@@ -56,7 +56,16 @@ with sync_playwright() as p:
     premier.get_by_label("Charge de la série 1").fill("42")
     premier.get_by_role("button",name="Valider la série 1").click()
     expect(premier.locator(".done")).to_have_count(1)
+    expect(page.locator("#repos")).not_to_have_text("0:00")
+    premier.get_by_role("button",name="Valider la série 1").click()
+    expect(page.locator("#repos")).to_have_text("0:00")
+    premier.get_by_role("button",name="Valider la série 1").click()
+    page.get_by_role("button",name="Suivant →",exact=True).click()
+    expect(page.locator(".journal-exercice:visible")).to_have_count(1)
+    expect(page.locator(".journal-exercice:visible")).to_contain_text("Développé couché")
     page.reload()
+    expect(page.locator(".journal-exercice:visible")).to_contain_text("Développé couché")
+    page.get_by_role("button",name="← Précédent",exact=True).click()
     expect(page.locator(".journal-exercice").first.locator(".done")).to_have_count(1)
     expect(page.locator(".journal-exercice").first.get_by_label("Charge de la série 1")).to_have_value("42")
     page.get_by_role("button",name="Terminer et enregistrer").click()
@@ -68,6 +77,8 @@ with sync_playwright() as p:
     cr.get_by_label("Charge de la série 1").fill("20")
     cr.get_by_role("button",name="Valider la série 1").click()
     cr.get_by_role("button",name="Machine indisponible").click()
+    page.get_by_role("button",name="Chercher un autre exercice").click()
+    page.get_by_label("Rechercher dans la bibliothèque").fill("enroulement")
     page.get_by_role("button",name="Choisir Enroulement du buste",exact=True).click()
     expect(page.locator(".journal-exercice").first.locator(".done")).to_have_count(1)
     expect(page.locator(".journal-exercice").nth(1).get_by_role("heading",name="Enroulement du buste")).to_be_visible()

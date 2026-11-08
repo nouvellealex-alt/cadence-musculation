@@ -21,6 +21,12 @@ ANCIEN_CARNET = {
     }]
 }
 
+
+def ouvrir_depuis_plus(page, nom):
+    page.locator("nav .nav-plus > summary").click()
+    page.get_by_role("link", name=nom, exact=True).click()
+
+
 with sync_playwright() as p, TemporaryDirectory() as tmp:
     browser = p.chromium.launch()
     desktop = browser.new_context()
@@ -44,7 +50,7 @@ with sync_playwright() as p, TemporaryDirectory() as tmp:
     page.wait_for_function("document.querySelector('dialog video').readyState >= 1")
     expect(page.locator("dialog a").first).to_be_visible()
     page.get_by_role("button", name="Fermer", exact=True).click()
-    page.get_by_role("link", name="Données", exact=True).click()
+    ouvrir_depuis_plus(page, "Données")
     ancien = Path(tmp) / "ancien.json"
     ancien.write_text(json.dumps(ANCIEN_CARNET), encoding="utf-8")
     page.get_by_role("button", name="Restaurer un fichier").click()
@@ -55,9 +61,9 @@ with sync_playwright() as p, TemporaryDirectory() as tmp:
     page.get_by_role("link", name="Progression", exact=True).click()
     page.locator("#periode").select_option("tout")
     expect(page.get_by_text("480 kg", exact=True).first).to_be_visible()
-    page.get_by_role("link", name="Planning", exact=True).click()
+    ouvrir_depuis_plus(page, "Planning")
     expect(page.get_by_role("heading", name="Planning", exact=True)).to_be_visible()
-    page.get_by_role("link", name="Données", exact=True).click()
+    ouvrir_depuis_plus(page, "Données")
     page.wait_for_function("navigator.serviceWorker.ready.then(() => true)")
     page.reload()
     page.wait_for_function("navigator.serviceWorker.controller !== null")

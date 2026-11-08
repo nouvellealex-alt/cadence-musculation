@@ -54,6 +54,8 @@ const poses = {
   fenteAvant:'91,61 92,81 111,117 92,101 91,125 78,123 77,157',
   marcheA:'103,41 102,60 110,104 88,84 79,70 89,127 67,153',
   marcheB:'103,41 102,60 110,104 121,84 139,92 127,131 151,153',
+  smithInclineBas:'71,64 81,78 118,116 70,102 83,78 151,126 149,157',
+  smithInclineHaut:'71,64 81,78 118,116 82,56 83,33 151,126 149,157',
   rowSoutienBas:'79,64 87,81 121,117 86,108 87,135 130,140 135,159',
   rowSoutienHaut:'79,64 87,81 121,117 108,90 104,112 130,140 135,159',
   curlInclineBas:'73,52 85,68 110,109 84,94 84,116 138,116 140,158',
@@ -106,7 +108,7 @@ export const mouvements = {
   marche:fiche('marcheA','marcheB','marche','mollets','Fessiers','Adoptez une foulée régulière.'),
   'tir-neutre':fiche('tirageHaut','tirageBas','poulie-neutre','dos','Biceps, avant-bras','Gardez les paumes face à face.'),
   'rowing-poitrine':fiche('rowSoutienBas','rowSoutienHaut','row-soutien','dos','Biceps, arrière des épaules','Gardez la poitrine en appui.'),
-  'di-smith':fiche('incline','inclineHaut','incline-smith','torse','Triceps, épaules','Vérifiez les butées.'),
+  'di-smith':fiche('smithInclineBas','smithInclineHaut','incline-smith','torse','Triceps, épaules','Vérifiez les butées.'),
   'tri-barre':fiche('triceps','debout','poulie-barre','triceps','Avant-bras','Gardez les coudes près des côtes.'),
   'tri-haut':fiche('triHautBas','triHautHaut','poulie-basse','triceps','Avant-bras','Gardez les coudes stables.'),
   'curl-incline':fiche('curlInclineBas','curlInclineHaut','curl-incline','biceps','Avant-bras','Gardez le dos contre le banc.'),
@@ -141,9 +143,9 @@ export function dessin(f, position=0, miniature=false) {
     case 'inverse': derriere=banc([101,102],[136,118])+rail([88,79],[102,114]);break;
     case 'mollets': derriere=rail([98,158],[143,158])+rail([119,67],[138,67])+rail([138,67],[138,157]);break;
     case 'traction': derriere=rail([63,24],[153,24])+rail([153,24],[153,160]);devant=rail(e(m,-5,-3),e(m,11,-3));break;
-    case 'poulie-neutre': derriere=banc([95,126],[129,126])+rail([149,24],[149,159])+rail([100,24],[149,24]);devant=cable([100,24],m)+rail(e(m,-6,0),e(m,6,0));break;
+    case 'poulie-neutre': derriere=banc([95,126],[129,126])+rail([149,24],[149,159])+rail([100,24],[149,24]);devant=cable([100,24],e(m,0,-8))+cable(e(m,-8,0),e(m,0,-8))+cable(e(m,0,-8),e(m,8,0))+rail(e(m,-9,-2),e(m,-9,4))+rail(e(m,9,-2),e(m,9,4));break;
     case 'row-soutien': derriere=banc([90,87],[126,126]);devant=rail(e(m,-8,0),e(m,8,0));break;
-    case 'incline-smith': derriere=banc([66,70],[123,123])+rail([86,22],[86,159])+rail([151,22],[151,159]);devant=barre(m);break;
+    case 'incline-smith': derriere=banc([66,70],[123,123])+rail([66,22],[66,159])+rail([100,22],[100,159]);devant=barre(m);break;
     case 'poulie-barre': derriere=rail([54,38],[54,157]);devant=cable([54,39],m)+rail(e(m,-13,0),e(m,13,0));break;
     case 'poulie-basse': derriere=rail([161,43],[161,158]);devant=cable([161,148],m)+cable(m,e(m,8,5));break;
     case 'curl-incline': derriere=banc([80,59],[121,116]);devant=rail(e(m,-8,0),e(m,8,0));break;

@@ -70,6 +70,7 @@ button, .btn {
   font-weight: 680;
   text-align: center;
   overflow-wrap: anywhere;
+  touch-action: manipulation;
 }
 button:not(:disabled):hover, .btn:hover { border-color: var(--blue); }
 button:disabled { opacity: .48; cursor: default; }
@@ -112,7 +113,7 @@ body > aside {
 .nav-label { color: var(--muted); padding: 0 10px; margin-bottom: 12px; }
 body > aside nav { display: grid; gap: 4px; }
 
-body > aside nav a {
+body > aside nav a, .nav-plus > summary {
   display: flex;
   align-items: center;
   gap: 11px;
@@ -125,14 +126,21 @@ body > aside nav a {
   font-weight: 660;
 }
 
-body > aside nav a:hover { color: var(--fg); background: var(--input); }
-body > aside nav a[aria-current="page"] {
+body > aside nav a:hover, .nav-plus > summary:hover { color: var(--fg); background: var(--input); }
+body > aside nav a[aria-current="page"], .nav-plus:has(a[aria-current="page"]) > summary {
   color: var(--blue);
   background: var(--input);
   border-color: var(--line);
   box-shadow: inset 3px 0 var(--blue);
 }
 nav svg, .icon svg { width: 19px; height: 19px; flex: none; }
+.nav-plus > summary {
+  cursor: pointer;
+  list-style: none;
+  touch-action: manipulation;
+}
+.nav-plus > summary::-webkit-details-marker { display: none; }
+.nav-plus-liens { display: grid; gap: 3px; margin: 4px 0 0 12px; }
 .local { margin-top: auto; color: var(--muted); font-size: .8rem; padding: 12px 8px; }
 .local i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 7px; }
 
@@ -238,9 +246,21 @@ dialog {
   width: min(calc(100vw - 24px), 620px);
   max-height: calc(100vh - 28px);
   max-height: calc(100dvh - 28px);
+  overscroll-behavior: contain;
   box-shadow: 0 22px 80px #0007;
 }
 dialog::backdrop { background: #03070fb8; }
+dialog > .row:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+}
+dialog > .row:first-child h2 { margin: 0; overflow-wrap: anywhere; }
 
 #message {
   position: fixed;
@@ -350,6 +370,10 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
 .semaine-objectif progress { width: 100%; accent-color: var(--accent); }
 
 .journal-guide {
+  position: sticky;
+  top: max(6px, env(safe-area-inset-top));
+  z-index: 1;
+  align-self: start;
   display: grid;
   gap: 10px;
   padding: clamp(14px, 2vw, 21px);
@@ -357,10 +381,12 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
   border-left: 3px solid var(--blue);
   border-radius: var(--radius);
   background: var(--panel);
+  box-shadow: 0 5px 15px #03070f30;
 }
 .journal-guide .timer { font-size: 1.3rem; }
-.journal-guide #guide-etape { margin-bottom: 0; color: var(--fg); font-weight: 650; }
-.journal-exercice.guide-actif { border-color: var(--blue); box-shadow: 0 0 0 1px var(--line); scroll-margin: 14px; }
+.guide-navigation #guide-etape, .journal-guide #guide-etape { margin-bottom: 0; color: var(--fg); font-weight: 650; }
+.journal-exercice.guide-actif { border-color: var(--blue); box-shadow: 0 0 0 1px var(--line); scroll-margin-block-start: 84px; }
+.journal-exercice[hidden], .serie-precedente[hidden] { display: none !important; }
 .journal-cible { margin-bottom: 0; }
 .journal-alternative { padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--input); }
 
@@ -371,28 +397,51 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
 }
 
 @media (max-width: 680px) {
-  :root { --navigation-height: calc(100px + env(safe-area-inset-bottom)); }
+  :root {
+    --navigation-height: calc(58px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(var(--navigation-height) + 10px);
+  }
   body > aside {
     width: auto;
     inset: auto 0 0;
-    padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+    padding: 4px max(4px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
     border: 0;
     border-top: 1px solid var(--line);
+    overflow: visible;
   }
   .brand, .nav-label, .local { display: none; }
-  body > aside nav { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; }
-  body > aside nav a {
+  body > aside nav { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  body > aside nav > a, .nav-plus > summary {
     flex-direction: column;
     justify-content: center;
     gap: 3px;
-    min-height: 45px;
-    padding: 4px 2px;
-    font-size: .69rem;
+    min-height: 49px;
+    padding: 4px 0;
+    font-size: clamp(.65rem, 2.9vw, .75rem);
     white-space: nowrap;
   }
-  body > aside nav a[aria-current="page"] { box-shadow: none; }
+  body > aside nav a[aria-current="page"], .nav-plus:has(a[aria-current="page"]) > summary { box-shadow: none; }
+  .nav-plus-liens {
+    position: absolute;
+    inset: auto max(7px, env(safe-area-inset-right)) calc(100% + 7px) auto;
+    width: min(290px, calc(100vw - 20px));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    padding: 7px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: 0 8px 30px #03070f80;
+  }
+  body > aside nav .nav-plus-liens a {
+    padding: 8px;
+    font-size: .84rem;
+  }
   nav svg { width: 17px; height: 17px; }
-  main { margin: 0; padding: 20px 12px calc(var(--navigation-height) + 28px); }
+  main {
+    margin: 0;
+    padding: calc(18px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(var(--navigation-height) + 22px) max(12px, env(safe-area-inset-left));
+  }
   .panel:not(.hero, .semaine-hero) { padding: 13px; }
   .grid { gap: 8px; }
   .grid.two { grid-template-columns: minmax(0, 1fr); }
@@ -400,14 +449,52 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
   .series { gap: 4px; grid-template-columns: 17px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) 37px 34px; }
   button, .btn, input, select { min-height: 44px; }
   input, textarea, select { font-size: 16px; }
+  dialog {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: min(90vh, 660px);
+    max-height: min(90dvh, 660px);
+    margin: 0;
+    padding: 14px max(14px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
   .actions-ex { gap: 5px; }
   .actions-ex button:not(.etoile) { padding-inline: 8px; }
+  .semaine-hero > .primary { width: 100%; min-height: 48px; }
   .semaine-exercice { grid-template-columns: 1.5rem minmax(0, 1fr); gap: 8px; align-items: start; }
   .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 1.5rem 54px minmax(0, 1fr); }
   dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 54px minmax(0, 1fr); }
   .semaine-exercice > button { grid-column: 2 / -1; justify-self: start; }
   .semaine-numero { width: 1.5rem; height: 1.5rem; }
   .semaine-miniature img, .semaine-miniature svg { height: 54px; }
+  main .journal-guide { padding: 7px 9px; }
+  .journal-guide > .row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 5px;
+  }
+  .journal-guide > .row > span { font-size: .8rem; white-space: nowrap; }
+  .journal-guide > .row > .row {
+    display: grid;
+    grid-template-columns: 44px 44px minmax(0, 1fr);
+    gap: 4px;
+    justify-self: end;
+    width: min(100%, 225px);
+  }
+  .journal-guide .row button { min-width: 44px; padding: 4px 5px; font-size: .77rem; line-height: 1.2; }
+  .guide-navigation > .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; }
+  .guide-navigation [data-act="guide-tous"] { grid-column: 1 / -1; }
+}
+
+@media (max-width: 680px) and (pointer: coarse) {
+  :root:has(input:is([type="text"],[type="number"],[type="search"],[type="password"],:not([type])):focus, textarea:focus) body > aside {
+    visibility: hidden;
+  }
+  :root:has(main input:focus, main textarea:focus) .journal-guide {
+    position: static;
+  }
 }
 
 @media (max-width: 380px) {

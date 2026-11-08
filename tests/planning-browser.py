@@ -5,8 +5,13 @@ import os
 from playwright.sync_api import expect, sync_playwright
 
 
+def ouvrir_depuis_plus(page, nom):
+    page.locator("nav .nav-plus > summary").click()
+    page.get_by_role("link", name=nom, exact=True).click()
+
+
 def test_planning(page):
-    page.get_by_role("link", name="Planning", exact=True).click()
+    ouvrir_depuis_plus(page, "Planning")
     expect(page.get_by_role("heading", name="Planning", exact=True)).to_be_visible()
     page.get_by_role("button", name="Ajuster", exact=True).click()
     page.get_by_label("Séances par semaine").fill("4")
@@ -32,13 +37,13 @@ def test_planning(page):
 
     entree.get_by_role("button", name="Démarrer", exact=True).click()
     expect(page.get_by_label("Titre", exact=True)).to_have_value("Salle · corps entier A")
-    page.get_by_role("link", name="Planning", exact=True).click()
+    ouvrir_depuis_plus(page, "Planning")
     expect(entree.get_by_text("En cours", exact=True)).to_be_visible()
     entree.get_by_role("button", name="Reprendre", exact=True).click()
     page.get_by_label("Charge de la série 1", exact=True).first.fill("45")
     page.get_by_role("button", name="Valider la série 1", exact=True).first.click()
     page.get_by_role("button", name="Terminer et enregistrer", exact=True).click()
-    page.get_by_role("link", name="Planning", exact=True).click()
+    ouvrir_depuis_plus(page, "Planning")
     expect(entree.get_by_text("Réalisée", exact=True)).to_be_visible()
     expect(page.get_by_text("1 / 4", exact=True)).to_be_visible()
     page.reload()
@@ -48,7 +53,7 @@ def test_planning(page):
 
 
 def test_partage(page):
-    page.get_by_role("link", name="Routines", exact=True).click()
+    ouvrir_depuis_plus(page, "Routines")
     carte = page.locator("article").filter(has=page.get_by_role("heading", name="Corps entier", exact=True))
     with page.expect_download() as fichier:
         carte.get_by_role("button", name="Exporter", exact=True).click()
@@ -89,7 +94,7 @@ def test_partage_personnel(page, navigateur, url):
     page.get_by_label("Matériel", exact=True).fill("Poulie")
     page.get_by_label("Consigne", exact=True).fill("Contrôler le retour.")
     page.get_by_role("button", name="Enregistrer", exact=True).click()
-    page.get_by_role("link", name="Routines", exact=True).click()
+    ouvrir_depuis_plus(page, "Routines")
     page.get_by_role("button", name="Créer une routine").click()
     page.get_by_label("Nom", exact=True).fill("Partage personnel")
     page.locator("select[name=ex]").select_option(label="Tirage personnel")

@@ -65,6 +65,7 @@ with sync_playwright() as playwright, TemporaryDirectory() as temp:
     y.get_by_role("button", name="Valider la série 1").click()
     page.get_by_role("button", name="Terminer et enregistrer").click()
     expect(page.get_by_text("Durée maximale · 42 s")).to_be_visible()
+    page.locator(".nav-plus > summary").click()
     page.get_by_role("link", name="Données").click()
     with page.expect_download() as capture:
         page.get_by_role("button", name="Exporter les séances en CSV").click()
