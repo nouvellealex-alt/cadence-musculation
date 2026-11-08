@@ -330,9 +330,14 @@ function donnees() {
     '<section class="panel section stack sources-cadence"><h2>Démonstrations hors ligne</h2><p class="muted">Enregistrez les '+packMedias.length+' fichiers illustrés dans ce navigateur pour les consulter même sans réseau.</p><div class="row">'+bout('Télécharger les démonstrations','pack-hors-ligne')+'</div><p id="etat-pack" role="status"></p></section>'+
     '<section class="panel section sources-cadence"><h2>Un carnet ouvert</h2><p class="muted">Cadence est publié sous AGPL-3.0. Les crédits et licences des médias figurent sur chaque fiche.</p><a href="https://github.com/nouvellealex-alt/cadence-musculation" target="_blank" rel="noreferrer">Code source et installation</a></section>';
 }
-const planning=creerPlanning({etat:()=>etat,modeles,parId,modal,fermer:()=>dialogue.close(),actualiser,afficher,demarrer,message});
+async function sauverImport() {
+  await sauver();
+  if(verrou) throw Error('Impossible d’enregistrer le fichier. Recharge Cadence et réessaie.');
+}
+const planning=creerPlanning({etat:()=>etat,modeles,parId,modal,fermer:()=>dialogue.close(),actualiser,afficher,demarrer,message,
+  sauver:sauverImport,proposerSemaine:source=>semaine.proposerImport(source)});
 const semaine=creerSemaine({etat:()=>etat,parId,tous,e,bout,modal,fermer:()=>dialogue.close(),actualiser,afficher,aller,demarrer,message,
-  sauver:async()=>{await sauver();if(verrou) throw Error('Impossible d’enregistrer cette semaine. Recharge Cadence et réessaie.');},
+  sauver:sauverImport,
   miniature:x=>miniatureEx(x,mouvements[x.id]),descriptionPrecedente:x=>{
     const dernier=precedent(x);
     return dernier?.series.filter(s=>s.faite).slice(0,3).map(s=>decrireSerie(dernier,s,nombre)).join(' · ')??'';
@@ -840,7 +845,14 @@ dialogue.addEventListener('close',()=>{if(!dialogue.open){dialogue.innerHTML='';
 dialogue.addEventListener('submit',async ev=>{
   ev.preventDefault();
   const form=ev.target;
-  if(verrou||!form.reportValidity())return;
+  if(verrou) {
+    const statut=$('[data-import-etat]',form);
+    const texte='Le carnet a changé dans un autre onglet. Recharge Cadence avant de réessayer.';
+    if(statut) statut.textContent=texte;
+    else message(texte);
+    return;
+  }
+  if(!form.reportValidity())return;
   try {
     if (await semaine.formulaire(form)||await planning.formulaire(form)) return;
     const data=form.dataset.form==='import'?null:new FormData(form);

@@ -54,6 +54,7 @@ export function reposTexte(cible) {
 
 export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,sauver,afficher,aller,demarrer,message,miniature,descriptionPrecedente}) {
   let selection=null;
+  let semaineProposee;
   let jourAffiche=indexJour();
   const actuel=()=>etat().semaine??semaineVide();
   const courant=()=>selection??indexJour();
@@ -61,6 +62,20 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,sau
   const titre=(nom,texte)=>'<header><div class="eyebrow">CARNET PERSONNEL</div><h1>'+nom+'</h1><p class="muted">'+texte+'</p></header>';
   const verifier=source=>verifierSemaine(source,new Set(tous().map(x=>x.id)));
   const mutation=semaine=>{etat().semaine=verifier(semaine);fermer();actualiser();};
+  async function enregistrerImport(nouvelle) {
+    const ancienne=etat().semaine;
+    etat().semaine=nouvelle;
+    try {await sauver();}
+    catch(erreur) {
+      if(etat().semaine===nouvelle) etat().semaine=ancienne;
+      throw erreur;
+    }
+    selection=null;
+  }
+  function proposerImport(source) {
+    semaineProposee=verifier({...source.semaine,active:true});
+    modal('Importer dans Ma semaine','<p>Ce fichier contient un programme sur sept jours. Il remplacera ta semaine type, et tes séances enregistrées et tes routines seront conservées.</p><form class="stack" data-form="semaine-confirmer"><p data-import-etat role="alert"></p><button class="primary">Importer dans Ma semaine</button></form>');
+  }
   function derniereJournee(i) {
     const debut=new Date();
     debut.setHours(0,0,0,0);
@@ -174,6 +189,17 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,sau
   }
   async function formulaire(form) {
     const type=form.dataset.form;
+    if(type==='semaine-confirmer') {
+      const submit=form.querySelector('button');
+      submit.disabled=true;
+      try {
+        if(!semaineProposee) throw Error('Sélectionne à nouveau le fichier.');
+        await enregistrerImport(semaineProposee);
+        semaineProposee=undefined;
+        fermer();aller('semaine');message('Semaine enregistrée sur cet appareil.');
+      } finally {submit.disabled=false;}
+      return true;
+    }
     if (!['semaine-import','semaine-edition','semaine-objectif','semaine-deplacer'].includes(type)) return false;
     const data=type==='semaine-import'?null:new FormData(form);
     const copie=structuredClone(actuel());
@@ -186,16 +212,9 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,sau
         if(!form.isConnected) return true;
         if(source?.format!=='cadence-semaine-v1') throw Error(source?.schema||source?.format==='cadence-chiffre-v1'?'C’est une sauvegarde complète. Ouvre Plus → Données → Restaurer un fichier.':'Ce fichier n’est pas une semaine Cadence.');
         const nouvelle=verifier({...source.semaine,active:true});
-        const ancienne=etat().semaine;
-        etat().semaine=nouvelle;
-        try { await sauver(); }
-        catch(erreur) {
-          if(etat().semaine===nouvelle) etat().semaine=ancienne;
-          throw erreur;
-        }
+        await enregistrerImport(nouvelle);
         if(!form.isConnected) return true;
         fermer();
-        selection=null;
         afficher();
       } finally {submit.disabled=false;}
     } else if(type==='semaine-edition') {
@@ -218,5 +237,5 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,sau
     message('Semaine enregistrée sur cet appareil.');
     return true;
   }
-  return {rendre,action,formulaire};
+  return {rendre,action,formulaire,proposerImport};
 }

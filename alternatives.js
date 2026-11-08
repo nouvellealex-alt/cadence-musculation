@@ -1,23 +1,25 @@
 const familles = [
   ['Poussée des pectoraux',[
     ['Développé incliné','di','di-smith','pompes-declinees'],
-    ['Poussée horizontale','dc','dc-halteres','pom']
+    ['Poussée horizontale','dc','dc-halteres','chest-press','pom']
   ]],
   ['Écarté des pectoraux',[
     ['Écarté','ec','ecarte-halteres']
   ]],
   ['Tirage du dos',[
     ['Tirage vertical','tir','tir-neutre','tra','tra-assistees','tra-lestees','tractions-supination'],
-    ['Tirage horizontal','row','rowh','rowing-poulie','rowing-poitrine','tirage-inverse']
+    ['Tirage horizontal','row','rowh','rowing-poulie','rowing-poitrine','tirage-inverse'],
+    ['Tirage bras tendus','tirage-bras-tendus']
   ]],
   ['Travail des épaules',[
-    ['Élévation latérale','lat'],
+    ['Élévation latérale','lat','lat-poulie'],
     ['Écarté inversé','inv'],
+    ['Tirage vers le visage','face-pull'],
     ['Poussée au-dessus de la tête','mil','mil-halteres']
   ]],
   ['Travail des triceps',[
     ['Extension vers le bas','tri','tri-barre'],
-    ['Extension bras relevés','tri-haut'],
+    ['Extension bras relevés','tri-haut','tri-haut-halteres'],
     ['Extension couchée','triceps-ez'],
     ['Poussée bras rapprochés','pompes-serrees','repulsions-sol','dip']
   ]],
