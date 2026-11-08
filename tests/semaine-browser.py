@@ -53,6 +53,10 @@ with sync_playwright() as p:
     expect(page.locator("#chrono")).to_have_count(0)
     premier = page.locator(".journal-exercice").first
     expect(premier.locator(".journal-cible")).to_contain_text("8–12")
+    premier.get_by_role("button",name="Passer pour l’instant").click()
+    expect(page.locator(".journal-exercice:visible")).to_contain_text("Développé couché")
+    expect(page.locator(".journal-exercice .done")).to_have_count(0)
+    page.get_by_role("button",name="← Précédent",exact=True).click()
     premier.get_by_label("Charge de la série 1").fill("42")
     premier.get_by_role("button",name="Valider la série 1").click()
     expect(premier.locator(".done")).to_have_count(1)
