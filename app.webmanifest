@@ -1,1 +1,26 @@
-{"name":"Cadence — Carnet de musculation","short_name":"Cadence","lang":"fr","start_url":"./","scope":"./","display":"standalone","background_color":"#0b0f17","theme_color":"#0b0f17","icons":[{"src":"marque.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
+{
+  "name": "Cadence — Carnet de musculation",
+  "short_name": "Cadence",
+  "lang": "fr",
+  "start_url": "./#semaine",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0f17",
+  "theme_color": "#0b0f17",
+  "icons": [
+    {
+      "src": "icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "id": "./",
+  "orientation": "portrait"
+}

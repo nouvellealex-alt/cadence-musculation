@@ -40,6 +40,7 @@ let progressionIndicateur = 'principal';
 let filtre = {nom:'',muscle:'',materiel:'',lieu:'',categorie:'',collection:''};
 let limiteCatalogue = 30;
 let guideTous=false;
+let etatHorsLigne='Préparation du carnet hors ligne…';
 let ecranActif=false;
 let verrouEcran=null;
 function message(t) {
@@ -322,7 +323,8 @@ function accesDonnees() {
     '<section class="panel section"><h2>Effacer le carnet</h2><p class="muted">Cette action efface les séances, les routines, les exercices personnels et le brouillon de cet appareil.</p>'+bout('Effacer mes données','effacer','','danger')+'</section>';
 }
 function donnees() {
-  return accesDonnees()+'<section class="panel section stack sources-cadence"><h2>Démonstrations hors ligne</h2><p class="muted">Enregistrez les '+packMedias.length+' fichiers illustrés dans ce navigateur pour les consulter même sans réseau.</p><div class="row">'+bout('Télécharger les démonstrations','pack-hors-ligne')+'</div><p id="etat-pack" role="status"></p></section>'+
+  return accesDonnees()+'<section class="panel section stack"><h2>Cadence sur iPhone</h2><p class="muted">Ouvre Cadence depuis une icône sur l’écran d’accueil.</p><p id="etat-hors-ligne" class="muted" role="status">'+e(etatHorsLigne)+'</p><div class="row">'+bout('Installer sur iPhone','installer-iphone')+'</div></section>'+
+    '<section class="panel section stack sources-cadence"><h2>Démonstrations hors ligne</h2><p class="muted">Enregistrez les '+packMedias.length+' fichiers illustrés dans ce navigateur pour les consulter même sans réseau.</p><div class="row">'+bout('Télécharger les démonstrations','pack-hors-ligne')+'</div><p id="etat-pack" role="status"></p></section>'+
     '<section class="panel section sources-cadence"><h2>Un carnet ouvert</h2><p class="muted">Cadence est publié sous AGPL-3.0. Les crédits et licences des médias figurent sur chaque fiche.</p><a href="https://github.com/nouvellealex-alt/cadence-musculation" target="_blank" rel="noreferrer">Code source et installation</a></section>';
 }
 const planning=creerPlanning({etat:()=>etat,modeles,parId,modal,fermer:()=>dialogue.close(),actualiser,afficher,demarrer,message});
@@ -343,6 +345,9 @@ function afficher(focus=false) {
   const autres=Object.keys(voies).filter(id=>!navPrincipale.includes(id));
   $('nav').innerHTML=navPrincipale.map(lien).join('')+'<details class="nav-plus"><summary>'+svg('M5 12h.01 M12 12h.01 M19 12h.01')+'Plus</summary><div class="nav-plus-liens">'+autres.map(lien).join('')+'</div></details>';
   vue.innerHTML=vues[page]();
+  if (page==='semaine'&&/iPhone/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches) {
+    vue.insertAdjacentHTML('beforeend','<div class="section">'+bout('Ajouter Cadence à mon iPhone','installer-iphone')+'</div>');
+  }
   if ($('#periode')) $('#periode').value=periode;
   horloges();
   etapeGuide();
@@ -548,6 +553,9 @@ document.addEventListener('click',async ev=>{
   try {
     if (semaine.action(b)||planning.action(b)) return;
     switch(act) {
+      case 'installer-iphone':
+        modal('Installer Cadence sur iPhone','<ol class="installation-iphone"><li>Ouvre Cadence dans <strong>Safari</strong>.</li><li>Dans le menu de Safari, touche <strong>Partager</strong>, puis <strong>Sur l’écran d’accueil</strong>.</li><li>Active <strong>Ouvrir comme app web</strong> si Safari propose ce réglage, puis touche <strong>Ajouter</strong>.</li><li>Ouvre Cadence depuis son icône une première fois avec du réseau.</li></ol><p class="muted">Pour récupérer un carnet existant, exporte-le depuis Données, puis restaure-le dans Cadence ouvert depuis son icône. Si tu veux seulement ton programme, importe ton fichier depuis Ma semaine.</p>');
+        break;
       case 'guide-avant': choisirEtape(s,indexGuide(s)-1);break;
       case 'guide-apres': choisirEtape(s,indexGuide(s)+1);break;
       case 'guide-choisir': choisirEtape(s,Number(i));break;
@@ -906,7 +914,16 @@ try {
     $('[data-act="guide-ecran"]')?.setAttribute('aria-pressed','false');
   }));
   setInterval(horloges,1000);
-  navigator.serviceWorker?.register('./sw.js').catch(()=>{});
+  const indiquerHorsLigne=texte=>{
+    etatHorsLigne=texte;
+    const statut=$('#etat-hors-ligne');
+    if(statut) statut.textContent=texte;
+  };
+  if(navigator.serviceWorker) {
+    navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready)
+      .then(()=>indiquerHorsLigne('Carnet prêt hors ligne. Les vidéos se téléchargent séparément.'))
+      .catch(()=>indiquerHorsLigne('Préparation hors ligne indisponible. Réessaie en ouvrant Cadence avec du réseau.'));
+  } else indiquerHorsLigne('Le mode hors ligne est indisponible dans ce navigateur.');
 } catch {
   vue.innerHTML=titre('STOCKAGE LOCAL','Carnet indisponible','Le navigateur a bloqué l’ouverture du stockage local. Rechargez après avoir autorisé le stockage pour ce site.');
 }
