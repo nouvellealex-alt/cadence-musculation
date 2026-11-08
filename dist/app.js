@@ -87,7 +87,7 @@ function choixIndisponible(index) {
     '<div class="row">'+bout('Chercher un autre exercice','remplacer-ex','data-i="'+index+'"')+bout('Fermer sans changer','fermer')+'</div>');
 }
 function choixEx(id='', requete='') {
-  const matches=chercherExercices(requete).slice(0,60);
+  const matches=chercherExercices(requete);
   const choisi=parId(id);
   if(choisi && !matches.some(x=>x.id===id)) matches.unshift(choisi);
   return matches.map(x=>'<option value="'+e(x.id)+'" '+(id===x.id?'selected':'')+'>'+e(x.nom)+'</option>').join('');
