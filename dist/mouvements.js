@@ -63,7 +63,13 @@ const poses = {
   triHautBas:'101,42 108,63 116,109 111,37 130,47 116,134 116,158',
   triHautHaut:'101,42 108,63 116,109 105,39 102,17 116,134 116,158',
   abPoulieHaut:'102,48 108,67 117,110 95,91 96,57 119,151 151,157',
-  abPoulieBas:'82,99 93,108 117,110 79,130 76,109 119,151 151,157'
+  abPoulieBas:'82,99 93,108 117,110 79,130 76,109 119,151 151,157',
+  faceDepart:'108,42 107,64 112,104 89,66 67,60 112,132 117,158',
+  faceFin:'108,42 107,64 112,104 86,57 97,48 112,132 117,158',
+  presseAssiseBas:'81,49 88,69 94,116 81,94 102,79 132,116 134,157',
+  presseAssiseHaut:'81,49 88,69 94,116 113,75 139,77 132,116 134,157',
+  brasTendusHaut:'108,45 106,65 117,107 91,77 74,84 115,133 117,158',
+  brasTendusBas:'108,45 106,65 117,107 106,89 104,115 115,133 117,158'
 };
 
 const fiche = (a,b,materiel,zone,secondaires,erreur) => ({a,b,materiel,zone,secondaires,erreur});
@@ -112,7 +118,12 @@ export const mouvements = {
   'tri-barre':fiche('triceps','debout','poulie-barre','triceps','Avant-bras','Gardez les coudes près des côtes.'),
   'tri-haut':fiche('triHautBas','triHautHaut','poulie-basse','triceps','Avant-bras','Gardez les coudes stables.'),
   'curl-incline':fiche('curlInclineBas','curlInclineHaut','curl-incline','biceps','Avant-bras','Gardez le dos contre le banc.'),
-  'cr-poulie':fiche('abPoulieHaut','abPoulieBas','poulie-crunch','abdos','—','Gardez le bassin stable.')
+  'cr-poulie':fiche('abPoulieHaut','abPoulieBas','poulie-crunch','abdos','—','Gardez le bassin stable.'),
+  'lat-poulie':fiche('debout','lateral','cable-lateral','epaules','Trapèzes','Évitez de hausser l’épaule.'),
+  'face-pull':fiche('faceDepart','faceFin','cable-face','epaules','Haut du dos','Gardez le buste stable.'),
+  'chest-press':fiche('presseAssiseBas','presseAssiseHaut','presse-assise','torse','Triceps, épaules','Gardez le dos contre le dossier.'),
+  'tirage-bras-tendus':fiche('brasTendusHaut','brasTendusBas','poulie-barre','dos','Triceps','Gardez les coudes souples.'),
+  'tri-haut-halteres':fiche('triHautBas','triHautHaut','halteres','triceps','—','Contrôlez la descente.')
 };
 
 export function dessin(f, position=0, miniature=false) {
@@ -143,6 +154,9 @@ export function dessin(f, position=0, miniature=false) {
     case 'inverse': derriere=banc([101,102],[136,118])+rail([88,79],[102,114]);break;
     case 'mollets': derriere=rail([98,158],[143,158])+rail([119,67],[138,67])+rail([138,67],[138,157]);break;
     case 'traction': derriere=rail([63,24],[153,24])+rail([153,24],[153,160]);devant=rail(e(m,-5,-3),e(m,11,-3));break;
+    case 'cable-lateral': derriere=rail([42,47],[42,158]);devant=cable([42,148],m);break;
+    case 'cable-face': derriere=rail([48,36],[48,158]);devant=cable([48,50],m)+cable(m,brasArriere[2]);break;
+    case 'presse-assise': derriere=banc([83,124],[134,124])+rail([77,70],[85,124])+rail([160,52],[160,158]);devant=rail([160,88],m);break;
     case 'poulie-neutre': derriere=banc([95,126],[129,126])+rail([149,24],[149,159])+rail([100,24],[149,24]);devant=cable([100,24],e(m,0,-8))+cable(e(m,-8,0),e(m,0,-8))+cable(e(m,0,-8),e(m,8,0))+rail(e(m,-9,-2),e(m,-9,4))+rail(e(m,9,-2),e(m,9,4));break;
     case 'row-soutien': derriere=banc([90,87],[126,126]);devant=rail(e(m,-8,0),e(m,8,0));break;
     case 'incline-smith': derriere=banc([66,70],[123,123])+rail([66,22],[66,159])+rail([100,22],[100,159]);devant=barre(m);break;

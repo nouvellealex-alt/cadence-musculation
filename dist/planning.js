@@ -1,4 +1,5 @@
 import { modes, verifierCibleRoutine } from './journal.js';
+import { lireImport, collageImport } from './semaine.js';
 
 const fr = new Intl.DateTimeFormat('fr-FR', {dateStyle:'full'});
 const moisFr = new Intl.DateTimeFormat('fr-FR', {month:'long', year:'numeric'});
@@ -152,7 +153,7 @@ export function developperProgramme(programme, debut, semaines, identifiant=()=>
   }))).flat();
 }
 
-export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,afficher=actualiser,demarrer,message}) {
+export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,afficher=actualiser,demarrer,message,proposerSemaine,sauver}) {
   let dateActive = jourLocal();
   const planning = () => etat().planning ??= repertoireVide();
   const routines = () => [...etat().routines,...modeles];
@@ -318,7 +319,7 @@ export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,affich
         break;
       }
       case 'planning-import-routine':
-        modal('Importer une routine','<form class="stack" data-form="planning-import-routine"><label>Fichier de routine Cadence<input name="routine" type="file" accept="application/json,.json" required></label><p class="muted">Une copie sera ajoutée, avec les exercices personnels inclus dans le fichier.</p><button class="primary">Importer</button></form>'); break;
+        modal('Importer une routine','<form class="stack" data-form="planning-import-routine"><label>Fichier de routine Cadence<input name="fichier" type="file"></label>'+collageImport+'<p class="muted">Choisis une routine exportée depuis Cadence ou ton fichier de semaine personnelle.</p><button class="primary">Importer</button></form>'); break;
       default: return false;
     }
     return true;
@@ -327,8 +328,8 @@ export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,affich
   async function formulaire(form) {
     const {form:nom,id} = form.dataset;
     if (!nom?.startsWith('planning-')) return false;
-    const data=new FormData(form);
-    const jour=data.get('jour');
+    const data=nom==='planning-import-routine'?null:new FormData(form);
+    const jour=data?.get('jour');
     let confirmation='';
     switch(nom) {
       case 'planning-ajouter': {
@@ -374,19 +375,25 @@ export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,affich
         confirmation='Routine classée.';
         break;
       case 'planning-import-routine': {
-        const fichier=data.get('routine');
-        if (!fichier?.size || fichier.size>256*1024) throw Error('Choisissez un fichier de routine de moins de 256 Ko.');
-        let contenu;
-        try { contenu=JSON.parse(await fichier.text()); }
-        catch { throw Error('Ce fichier n’est pas un document JSON valide.'); }
-        if (!form.isConnected) return true;
-        if (etat().routines.length>=1000) throw Error('Le carnet contient déjà 1 000 routines.');
-        const {routine:r,nouveaux}=importerRoutine(contenu,etat().persos,parId);
-        const id=crypto.randomUUID();
-        etat().persos.push(...nouveaux);
-        etat().routines.unshift({id,...r});
-        confirmation='Routine importée.';
-        break;
+        const submit=form.querySelector('button');
+        submit.disabled=true;
+        try {
+          form.querySelector('[data-import-etat]').textContent='Lecture du fichier…';
+          const contenu=await lireImport(form,256*1024);
+          if (!form.isConnected) return true;
+          if (contenu?.format==='cadence-semaine-v1') {proposerSemaine(contenu);return true;}
+          if (contenu?.schema||contenu?.format==='cadence-chiffre-v1') throw Error('C’est une sauvegarde complète. Ouvre Plus → Données → Restaurer un fichier.');
+          if (etat().routines.length>=1000) throw Error('Le carnet contient déjà 1 000 routines.');
+          const {routine:r,nouveaux}=importerRoutine(contenu,etat().persos,parId);
+          const id=crypto.randomUUID();
+          const anciennesRoutines=etat().routines, anciensPersos=etat().persos;
+          etat().persos=[...anciensPersos,...nouveaux];
+          etat().routines=[{id,...r},...anciennesRoutines];
+          try { await sauver(); }
+          catch(erreur) {etat().routines=anciennesRoutines;etat().persos=anciensPersos;throw erreur;}
+          fermer();afficher();message('Routine importée.');
+          return true;
+        } finally {submit.disabled=false;}
       }
       default: return false;
     }
