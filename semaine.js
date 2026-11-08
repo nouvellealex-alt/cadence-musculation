@@ -50,14 +50,21 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
   }
   function rendre() {
     const profil=actuel(), i=courant(), jour=profil.jours[i];
-    const navigation='<div class="semaine-jours" aria-label="Jours de la semaine">'+joursSemaine.map((nom,n)=>bout(nom.slice(0,3)+'.','semaine-jour',attrs(n)+' aria-label="'+nom+'" aria-pressed="'+(n===i)+'"'+(n===indexJour()?' aria-current="date"':''),'jour-semaine')).join('')+'</div>';
+    const aujourdHui=indexJour();
+    const navigation='<div class="row spread section"><h2>Ma semaine</h2>'+bout('Revenir à aujourd’hui','semaine-aujourdhui')+'</div>'+
+      '<div class="semaine-jours" aria-label="Jours de la semaine">'+joursSemaine.map((nom,n)=>bout(nom.slice(0,3)+'.','semaine-jour',attrs(n)+' aria-label="'+nom+'" aria-pressed="'+(n===i)+'"'+(n===aujourdHui?' aria-current="date"':''),'jour-semaine')).join('')+'</div>';
     const outils='<div class="row">'+bout('Modifier la journée','semaine-editer')+bout('Déplacer la séance','semaine-deplacer')+(jour.exercices.length?bout('Passer ce jour en repos','semaine-repos'):'')+bout('Modifier mon objectif','semaine-objectif')+'</div>';
     const importation=bout('Importer ma semaine','semaine-importer','','primary');
     if (!profil.active) return titre('Ma semaine','Un écran dédié à votre entraînement. Importez une semaine ou composez-la sur cet appareil.')+'<section class="panel stack"><h2>Créer mon carnet personnel</h2><p class="muted">Vos séances, objectifs et charges restent dans votre navigateur.</p><div class="row">'+importation+bout('Partir d’une semaine vide','semaine-activer')+'</div></section>';
     const faite=derniereJournee(i);
-    const sousTitre=faite?'Réalisée cette semaine':jour.exercices.length?'Séance prévue':'Repos';
-    const action=etat().actif?bout('Reprendre la séance','semaine-reprendre','','primary'):(jour.exercices.length?bout(faite?'Refaire la séance':'Démarrer la séance','semaine-demarrer','','primary'):'');
-    return titre(i===indexJour()?'Aujourd’hui':joursSemaine[i],e(profil.objectif)||'Votre semaine d’entraînement')+navigation+
+    const brouillon=etat().actif;
+    const memeSeance=brouillon?.semaineJour===i&&brouillon.nom===jour.nom;
+    const sousTitre=memeSeance?'En cours':jour.exercices.length?'Séance prévue':'Repos';
+    const reprendre=bout('Reprendre la séance','semaine-reprendre','','primary');
+    const action=memeSeance?reprendre:(!brouillon&&jour.exercices.length?bout('Démarrer la séance','semaine-demarrer','','primary'):'');
+    const autreBrouillon=brouillon&&!memeSeance?'<section class="panel row spread section" aria-label="Séance en cours"><div><p class="eyebrow">SÉANCE EN COURS</p><h2>'+e(brouillon.nom||'Séance sans titre')+'</h2><p class="muted">Terminez cette séance pour en commencer une autre.</p></div>'+reprendre+'</section>':'';
+    const historiqueJour=faite?'<section class="panel row spread section" aria-label="Séance enregistrée cette semaine"><div><p class="eyebrow">ENREGISTRÉE CETTE SEMAINE</p><h2>'+e(faite.nom)+'</h2><p class="muted">Séance enregistrée pour le créneau du '+joursSemaine[i].toLocaleLowerCase('fr')+'.</p></div>'+bout('Consulter la séance','details','data-id="'+e(faite.id)+'"')+'</section>':'';
+    return titre(i===aujourdHui?'Aujourd’hui':joursSemaine[i],e(profil.objectif)||'Votre semaine d’entraînement')+navigation+autreBrouillon+
       '<section class="panel semaine-hero"><div><p class="eyebrow">'+e(sousTitre)+'</p><h2>'+e(jour.nom)+'</h2><p class="muted">'+jour.exercices.length+' mouvements · '+jour.exercices.reduce((n,x)=>n+x.series,0)+' séries prévues</p></div>'+action+'</section>'+
       '<ol class="semaine-exercices">'+jour.exercices.map((x,n)=>{
         const ex=parId(x.id);
@@ -65,7 +72,7 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
         const img=miniature(ex);
         const historique=descriptionPrecedente(ex);
         return '<li class="panel semaine-exercice"><span class="semaine-numero">'+(n+1)+'</span>'+(img?'<div class="semaine-miniature">'+img+'</div>':'')+'<div><h3>'+e(ex.nom)+'</h3><p class="muted">'+e(ex.equipement||ex.materiel)+(x.note?' · '+e(x.note):'')+'</p><div class="row"><span class="tag">'+e(cibleTexte(x))+'</span><span class="tag">Repos '+e(reposTexte(x))+'</span></div>'+(historique?'<p class="muted semaine-precedent">Précédent · '+e(historique)+'</p>':'')+'</div>'+bout('Voir la fiche','exercice','data-id="'+e(ex.id)+'"')+'</li>';
-      }).join('')+'</ol>'+
+      }).join('')+'</ol>'+historiqueJour+
       '<details class="panel details section"><summary>Organiser ma semaine</summary><div class="stack section">'+outils+'<div class="row">'+importation+bout('Quitter le mode personnel','semaine-masquer')+'</div></div></details>';
   }
   function ligne(x={}) {
@@ -77,6 +84,7 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
     const {act,i}=b.dataset;
     switch(act) {
       case 'semaine-jour': selection=Number(i);afficher();document.querySelector('.jour-semaine[aria-pressed=true]')?.focus();break;
+      case 'semaine-aujourdhui': selection=null;afficher();document.querySelector('.jour-semaine[aria-current=date]')?.focus();break;
       case 'semaine-activer': mutation({...actuel(),active:true});break;
       case 'semaine-masquer': mutation({...actuel(),active:false});break;
       case 'semaine-reprendre': aller('seance');break;

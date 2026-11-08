@@ -2,7 +2,7 @@ import { mouvements, dessin } from './mouvements.js';
 import { catalogue, modeles } from './exercices.js';
 import { creerPlanning, jourLocal, ajouterJours } from './planning.js';
 import { creerSemaine, reposTexte } from './semaine.js';
-import { alternatives, poste } from './alternatives.js';
+import { alternatives, poste, posteDisponible, postesPossibles } from './alternatives.js';
 import { ouvrir, ecrire, nouveau, verifier, uuid, chiffrer, dechiffrer, volume, records } from './donnees.js';
 import { modes, mode, types, champsSerie, effort, groupesSuperset, initialiserSerie, decrireSerie, mesureProgression, indicateurs, volumeSerie, groupeMesure, reposApres, disques, csvSeances } from './journal.js';
 
@@ -21,7 +21,7 @@ const voies = {
 };
 const svg = (path) => '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="'+path+'"/></svg>';
 const e = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-const fr = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1});
+const fr = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2});
 const date = new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium'});
 const nombre = n => fr.format(n);
 const bout = (label,act,attrs='',classe='') => '<button type="button" class="'+classe+'" data-act="'+act+'" '+attrs+'>'+label+'</button>';
@@ -39,6 +39,9 @@ let progressionEx = '';
 let progressionIndicateur = 'principal';
 let filtre = {nom:'',muscle:'',materiel:'',lieu:'',categorie:'',collection:''};
 let limiteCatalogue = 30;
+let guideTous=false;
+let ecranActif=false;
+let verrouEcran=null;
 function message(t) {
   $('#message').textContent = t;
   clearTimeout(flash);
@@ -64,27 +67,35 @@ function modal(nom, contenu) {
   dialogue.setAttribute('aria-labelledby','titre-dialogue');
   dialogue.showModal();
 }
-function choixPourSeance(index = null) {
+function choixPourSeance(index = null, station) {
   const remplace = index !== null;
+  const indisponible=station!==undefined;
+  const s=etat.actif;
+  const actuel=remplace?s.exercices[index]:null;
+  const bloques=new Set([...(s?.postesBloques??[]),station].filter(Boolean));
   modal(remplace?'Remplacer un exercice':'Ajouter un exercice','<label>Rechercher dans la bibliothèque<input type="search" id="cherche-ajout" placeholder="Nom, muscle ou matériel" autofocus></label><div id="resultats-ajout" class="stack section"></div>');
   const champ = $('#cherche-ajout');
   const rendre = () => {
-    const trouve = chercherExercices(champ.value).slice(0,40);
-    const action = remplace?'remplacer-ex-ok':'ex-vers-seance';
+    const trouve = chercherExercices(champ.value,{salle:s?.semaineJour!==undefined}).filter(x=>(!actuel||x.id!==actuel.id)&&(!indisponible||posteDisponible(x,bloques))).slice(0,40);
+    const action = indisponible?'indisponible-ok':remplace?'remplacer-ex-ok':'ex-vers-seance';
     const libelle = remplace?'Choisir':'Ajouter';
-    $('#resultats-ajout').innerHTML = trouve.map(x=>'<div class="row spread"><div><strong>'+e(x.nom)+'</strong><br><small>'+e(x.muscle)+'</small></div>'+bout(libelle,action,'data-id="'+e(x.id)+'" data-i="'+e(index)+'" aria-label="'+libelle+' '+e(x.nom)+'"')+'</div>').join('') || vide('Aucun exercice correspondant.');
+    $('#resultats-ajout').innerHTML = trouve.map(x=>'<div class="row spread"><div><strong>'+e(x.nom)+'</strong><br><small>'+e(x.muscle)+'</small></div>'+bout(libelle,action,'data-id="'+e(x.id)+'" data-i="'+e(index)+'" data-poste="'+e(station)+'" aria-label="'+libelle+' '+e(x.nom)+'"')+'</div>').join('') || vide('Aucun exercice correspondant.');
   };
   champ.addEventListener('input',rendre);
   rendre();
 }
-function choixIndisponible(index) {
+function choixIndisponible(index, posteChoisi) {
   const s=etat.actif;
   const x=s.exercices[index];
-  const station=poste(parId(x.id)??x);
-  const proposes=alternatives(parId(x.id)??x,tous(),[...new Set([...(s.postesBloques??[]),station].filter(Boolean))]);
+  const ex=parId(x.id)??x;
+  const postes=postesPossibles(ex);
+  const station=postes.includes(posteChoisi)?posteChoisi:poste(ex);
+  const proposes=alternatives(ex,tous(),[...(s.postesBloques??[]),station].filter(Boolean),s.semaineJour!==undefined);
+  const attr='data-i="'+index+'" data-poste="'+e(station)+'"';
+  const choisir=postes.length>1?'<details class="details"><summary>Un autre équipement est pris ?</summary><div class="row section">'+postes.filter(p=>p!==station).map(p=>bout(e(p),'indisponible-poste','data-i="'+index+'" data-poste="'+e(p)+'"')).join('')+'</div></details>':'';
   modal('Machine indisponible','<p class="muted">'+(station?'Poste à éviter pour cette séance · '+e(station):'Choisissez un mouvement compatible avec votre séance.')+'</p>'+
-    '<div class="stack section">'+(proposes.map(({exercice,raison})=>'<article class="panel semaine-exercice"><div class="semaine-miniature">'+miniatureEx(exercice,mouvements[exercice.id])+'</div><div><h3>'+e(exercice.nom)+'</h3><p class="muted">'+e(exercice.equipement||exercice.materiel)+' · '+e(raison)+'</p></div>'+bout('Choisir','indisponible-ok','data-id="'+e(exercice.id)+'" data-i="'+index+'" aria-label="Choisir '+e(exercice.nom)+'"')+'</article>').join('')||vide('Aucune alternative suffisamment proche dans le catalogue.'))+'</div>'+
-    '<div class="row">'+bout('Chercher un autre exercice','remplacer-ex','data-i="'+index+'"')+bout('Fermer sans changer','fermer')+'</div>');
+    choisir+'<div class="stack section">'+(proposes.map(({exercice,raison})=>'<article class="panel semaine-exercice"><div class="semaine-miniature">'+miniatureEx(exercice,mouvements[exercice.id])+'</div><div><h3>'+e(exercice.nom)+'</h3><p class="muted">'+e(exercice.equipement||exercice.materiel)+' · '+e(raison)+'</p></div>'+bout('Choisir','indisponible-ok','data-id="'+e(exercice.id)+'" '+attr+' aria-label="Choisir '+e(exercice.nom)+'"')+'</article>').join('')||vide('Aucune alternative suffisamment proche dans le catalogue.'))+'</div>'+
+    '<div class="row">'+bout('Chercher un autre exercice','indisponible-chercher',attr)+bout('Fermer sans changer','fermer')+'</div>');
 }
 function choixEx(id='', requete='') {
   const matches=chercherExercices(requete);
@@ -128,9 +139,10 @@ function inputSerie(champ, valeur, attrs, libelle, requis=true) {
 }
 function carteJournal(x,i) {
   const derniere = precedent(x);
+  const seriesPrecedentes=derniere?.series.filter(y=>y.faite)??[];
   const champs = champsSerie(x);
   const numero = 'data-i="'+i+'"';
-  const guide=etat.semaine?.active;
+  const guide=etat.actif.semaineJour!==undefined;
   const parametres = '<details class="details exercice-options"><summary>Réglages de l’exercice</summary><div class="row filters section"><label>Mode de suivi<select data-mode-i="'+i+'" '+(x.series.some(y=>y.faite)?'disabled':'')+'>'+Object.entries(modes).map(([k,v])=>'<option value="'+k+'" '+(k===mode(x)?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>Repos (s)<input '+numero+' data-field="repos" type="number" min="0" max="600" step="1" placeholder="'+etat.repos+' par défaut" value="'+e(x.repos)+'"></label><label>Supersérie<select '+numero+' data-field="superset"><option value="">Aucune</option>'+choix(groupesSuperset,x.superset)+'</select></label></div><label>Note de l’exercice<textarea '+numero+' data-field="note" maxlength="1000" rows="2">'+e(x.note)+'</textarea></label></details>';
   const gestion=bout('↑','monter-ex',numero+' aria-label="Monter '+e(x.nom)+'"'+(i===0?' disabled':''))+bout('↓','descendre-ex',numero+' aria-label="Descendre '+e(x.nom)+'"'+(i===etat.actif.exercices.length-1?' disabled':''))+bout('Remplacer','remplacer-ex',numero+' aria-label="Remplacer '+e(x.nom)+'"')+bout('Retirer','retirer-ex',numero+' aria-label="Retirer '+e(x.nom)+'"');
   const actions='<div class="row">'+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(x.nom)+'"')+(guide?'':gestion)+'</div>'+
@@ -138,26 +150,28 @@ function carteJournal(x,i) {
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
     const mesure = champs.map(champ=>inputSerie(champ,y[champ[0]],at+' data-field="'+champ[0]+'"',champ[2]+' de la série '+(j+1))).join('');
-    const copie = derniere?bout('Reprendre les valeurs','reprendre-serie',at+' aria-label="Reprendre les valeurs de la série '+(j+1)+'"'):'';
+    const precedent=seriesPrecedentes[j];
+    const copie = precedent?bout('Précédent · '+e(decrireSerie(x,precedent,nombre)),'reprendre-serie',at+' aria-label="Reprendre les valeurs de la série '+(j+1)+'"'+(y.faite?' hidden':''),'serie-precedente'):'';
     return '<div class="bloc-serie" '+at+'><div class="series journal-serie '+(y.faite?'done':'')+'" data-colonnes="'+champs.length+'"><span>'+(j+1)+'</span>'+mesure+
-      bout('✓','valider',at+' aria-label="Valider la série '+(j+1)+'" aria-pressed="'+y.faite+'"','check')+'</div>'+
-      '<details class="details serie-options"><summary>Options de la série '+(j+1)+(y.type==='Travail'?'':' · '+y.type)+'</summary><div class="row filters"><label>Type<select '+at+' data-field="type" aria-label="Type de la série '+(j+1)+'">'+choix(types,y.type)+'</select></label><label>Effort perçu (RPE)'+inputSerie(effort,y.rpe,at+' data-field="rpe"','RPE de la série '+(j+1),false)+'</label></div><div class="row">'+copie+bout('↑','monter-serie',at+' aria-label="Monter la série '+(j+1)+'"'+(j===0?' disabled':''))+bout('↓','descendre-serie',at+' aria-label="Descendre la série '+(j+1)+'"'+(j===x.series.length-1?' disabled':''))+bout('Supprimer','retirer-serie',at+' aria-label="Supprimer la série '+(j+1)+'"')+'</div></details></div>';
+      bout('✓','valider',at+' aria-label="Valider la série '+(j+1)+'" aria-pressed="'+y.faite+'"','check')+'</div>'+copie+
+      '<details class="details serie-options"><summary>Options de la série '+(j+1)+(y.type==='Travail'?'':' · '+y.type)+'</summary><div class="row filters"><label>Type<select '+at+' data-field="type" aria-label="Type de la série '+(j+1)+'">'+choix(types,y.type)+'</select></label><label>Effort perçu (RPE)'+inputSerie(effort,y.rpe,at+' data-field="rpe"','RPE de la série '+(j+1),false)+'</label></div><div class="row">'+bout('↑','monter-serie',at+' aria-label="Monter la série '+(j+1)+'"'+(j===0?' disabled':''))+bout('↓','descendre-serie',at+' aria-label="Descendre la série '+(j+1)+'"'+(j===x.series.length-1?' disabled':''))+bout('Supprimer','retirer-serie',at+' aria-label="Supprimer la série '+(j+1)+'"')+'</div></details></div>';
   }).join('');
-  const historique = derniere ? ' · Précédent : '+derniere.series.filter(y=>y.faite).slice(0,4).map(y=>decrireSerie(x,y,nombre)).join(' / ') : '';
+  const historique = !guide&&derniere ? ' · Précédent : '+seriesPrecedentes.slice(0,4).map(y=>decrireSerie(x,y,nombre)).join(' / ') : '';
   const repos=x.repos??etat.repos;
   const objectif=x.repsCible!==undefined?'<p class="journal-cible"><span class="tag">'+x.series.length+' × '+x.repsCible+(x.repsCible===x.repsMax?'':'–'+x.repsMax)+' rép.</span> <span class="tag">Repos '+e(reposTexte({repos,reposMax:Math.max(repos,x.reposMax)}))+'</span></p>':'';
   const materiel=parId(x.id)?.equipement??x.materiel;
   return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(x.nom)+'</h2><small>'+e(materiel)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+objectif+(guide&&x.note?'<p class="muted">'+e(x.note)+'</p>':'')+actions+parametres+
     '<div class="series journal-serie series-head" data-colonnes="'+champs.length+'"><span>N°</span>'+champs.map(champ=>'<span>'+champ[1]+'</span>').join('')+'<span>Validée</span></div>'+lignes+
-    bout('＋ Ajouter une série','ajouter-serie',numero)+'</article>';
+    '<div class="row spread">'+bout('＋ Ajouter une série','ajouter-serie',numero)+(guide&&i<etat.actif.exercices.length-1?bout('Exercice suivant →','guide-choisir','data-i="'+(i+1)+'"'):'')+'</div></article>';
 }
 function seance() {
   const s = etat.actif;
   if (!s) return titre('ENTRAÎNEMENT','Séance','Commencez librement ou choisissez une routine.')+bout('＋ Démarrer une séance','demarrer','','primary')+' <a class="btn" href="#routines">Voir les routines</a>';
-  const guide=etat.semaine?.active;
+  const guide=s.semaineJour!==undefined;
   const champs='<label>Titre<input data-field="nom" maxlength="120" value="'+e(s.nom)+'"></label><label>Notes de séance<textarea data-field="notes" maxlength="3000" rows="2">'+e(s.notes)+'</textarea></label>';
   return titre('ENTRAÎNEMENT',guide?e(s.nom):'Séance en cours','Les modifications sont enregistrées sur cet appareil.')+
-    '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'">'+(guide?'<p id="guide-etape" class="muted"></p>':'')+'<div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
+    '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'"><div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
+    (guide?'<section class="panel guide-navigation"><p id="guide-etape" aria-live="polite"></p><div class="row">'+bout('← Précédent','guide-avant')+bout('Suivant →','guide-apres')+bout('Tous les exercices','guide-tous','aria-pressed="false"')+('wakeLock' in navigator?bout('Écran allumé','guide-ecran','aria-pressed="'+ecranActif+'"'):'')+'</div></section>':'')+
     (guide?'<details class="details panel"><summary>Titre et notes de séance</summary><div class="stack section">'+champs+'</div></details>':'<section class="panel stack">'+champs+'</section>')+
     s.exercices.map(carteJournal).join('')+
     (!s.exercices.length?vide('Ajoutez votre premier exercice pour enregistrer une série.'):'')+
@@ -167,7 +181,7 @@ function routines() {
   const groupes=planning.groupesRoutines();
   return titre('PLANIFIER','Routines','Préparez les exercices, les séries et les répétitions de vos prochaines séances.')+'<div class="row">'+bout('＋ Créer une routine','nouvelle-routine','','primary')+planning.boutonImporter()+' <a class="btn" href="#planning">Voir le calendrier</a></div>'+
     '<h2 class="section">Mes routines</h2>'+(groupes.length?groupes.map(g=>'<section class="section"><h3>'+e(g.nom)+'</h3><div class="grid two">'+g.routines.map(fiche).join('')+'</div></section>').join(''):vide('Aucune routine personnelle.'))+
-    '<h2 class="section">Modèles</h2><div class="grid two">'+modeles.map(fiche).join('')+'</div>';
+    '<h2 class="section">Modèles</h2><div class="grid two">'+modeles.filter(r=>!etat.semaine?.active||!['maison','barre-parc'].includes(r.id)).map(fiche).join('')+'</div>';
 }
 const normal = s => String(s??'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/œ/g,'oe');
 const estFavori = id => (etat.favorisEx??[]).includes(id);
@@ -182,11 +196,13 @@ function chercherExercices(requete, criteres={}) {
     return mots.every(mot=>index.includes(mot)) &&
       ['muscle','materiel','lieu','categorie'].every(k=>!criteres[k]||criteres[k]===x[k]) &&
       (criteres.collection!=='favoris'||estFavori(x.id)) &&
+      (criteres.collection!=='personnels'||etat.persos.includes(x)) &&
       (criteres.collection!=='recents'||recents.has(x.id));
   }).sort((a,b)=>{
     if (criteres.collection==='recents') return recents.get(a.id)-recents.get(b.id);
     const nomA=normal(a.nom), nomB=normal(b.nom), premier=mots[0];
     return (premier?Number(nomB.startsWith(premier))-Number(nomA.startsWith(premier)):0) ||
+      (criteres.salle?Number(b.lieu==='Salle')-Number(a.lieu==='Salle'):0) ||
       Number(estFavori(b.id))-Number(estFavori(a.id)) ||
       ((recents.get(a.id)??Infinity)-(recents.get(b.id)??Infinity)||0) ||
       a.nom.localeCompare(b.nom,'fr');
@@ -245,7 +261,7 @@ function exercices() {
   const images=catalogue.filter(x=>miniatureEx(x,mouvements[x.id])).length;
   const films=catalogue.filter(x=>x.media?.video).length;
   return titre('BIBLIOTHÈQUE','Exercices',catalogue.length+' fiches · '+images+' illustrées · '+films+' vidéos. Recherchez un mouvement par nom, muscle ou matériel.')+
-    '<section class="panel stack"><label>Rechercher<input id="recherche" type="search" placeholder="Ex. développé couché, dos, haltères" value="'+e(filtre.nom)+'"></label><div class="row filters">'+select('muscle','Muscles')+select('materiel','Matériel')+select('lieu','Lieu et appui')+select('categorie','Type')+'</div><div class="row spread"><label>Collection<select data-filter="collection"><option value="">Tout afficher</option><option value="favoris" '+(filtre.collection==='favoris'?'selected':'')+'>Mes favoris</option><option value="recents" '+(filtre.collection==='recents'?'selected':'')+'>Récemment utilisés</option></select></label>'+bout('＋ Exercice personnalisé','creer-ex','','primary')+'</div></section><div class="grid section" id="cartes">'+cartes()+'</div>';
+    '<section class="panel stack"><label>Rechercher<input id="recherche" type="search" placeholder="Ex. développé couché, dos, haltères" value="'+e(filtre.nom)+'"></label><div class="row filters">'+select('muscle','Muscles')+select('materiel','Matériel')+select('lieu','Lieu et appui')+select('categorie','Type')+'</div><div class="row spread"><label>Collection<select data-filter="collection"><option value="">Tout afficher</option><option value="favoris" '+(filtre.collection==='favoris'?'selected':'')+'>Mes favoris</option><option value="recents" '+(filtre.collection==='recents'?'selected':'')+'>Récemment utilisés</option><option value="personnels" '+(filtre.collection==='personnels'?'selected':'')+'>Mes exercices</option></select></label>'+bout('＋ Exercice personnalisé','creer-ex','','primary')+'</div></section><div class="grid section" id="cartes">'+cartes()+'</div>';
 }
 function courbeEx(seances) {
   const exercices = new Map();
@@ -314,10 +330,16 @@ const semaine=creerSemaine({etat:()=>etat,parId,tous,e,bout,modal,fermer:()=>dia
     return dernier?.series.filter(s=>s.faite).slice(0,3).map(s=>decrireSerie(dernier,s,nombre)).join(' · ')??'';
   }});
 const vues = {accueil,semaine:semaine.rendre,seance,routines,planning:planning.rendre,exercices,stats,donnees};
+const navPrincipale=['semaine','seance','exercices','stats'];
 function afficher(focus=false) {
   const page=chemin();
   document.documentElement.dataset.theme=etat.theme;
-  $('nav').innerHTML=Object.entries(voies).map(([id,[nom,trace]])=>'<a href="#'+id+'" '+(page===id?'aria-current="page"':'')+'>'+svg(trace)+nom+'</a>').join('');
+  const lien=id=>{
+    const [nom,trace]=voies[id];
+    return '<a href="#'+id+'" '+(page===id?'aria-current="page"':'')+'>'+svg(trace)+nom+(id==='seance'&&etat.actif?'<span class="nav-en-cours" aria-hidden="true"></span>':'')+'</a>';
+  };
+  const autres=Object.keys(voies).filter(id=>!navPrincipale.includes(id));
+  $('nav').innerHTML=navPrincipale.map(lien).join('')+'<details class="nav-plus"><summary>'+svg('M5 12h.01 M12 12h.01 M19 12h.01')+'Plus</summary><div class="nav-plus-liens">'+autres.map(lien).join('')+'</div></details>';
   vue.innerHTML=vues[page]();
   if ($('#periode')) $('#periode').value=periode;
   horloges();
@@ -328,9 +350,40 @@ function etapeGuide() {
   const texte=$('#guide-etape');
   if (!texte||!etat.actif) return;
   const exercices=etat.actif.exercices;
-  const i=exercices.findIndex(x=>x.series.some(y=>!y.faite));
-  texte.textContent=i<0?(exercices.length?'Toutes les séries sont validées.':'Ajoutez un exercice pour commencer.'):(i+1)+' / '+exercices.length+' · '+exercices[i].nom+(exercices[i+1]?' · Ensuite : '+exercices[i+1].nom:'');
-  vue.querySelectorAll('.journal-exercice').forEach((el,n)=>el.classList.toggle('guide-actif',i===n));
+  const i=indexGuide(etat.actif);
+  texte.textContent=i<0?'Ajoutez un exercice pour commencer.':(i+1)+' / '+exercices.length+' · '+exercices[i].nom+(exercices[i+1]?' · Ensuite : '+exercices[i+1].nom:'');
+  $('[data-act="guide-avant"]').disabled=i<=0;
+  $('[data-act="guide-apres"]').disabled=i<0||i>=exercices.length-1;
+  $('[data-act="guide-tous"]').setAttribute('aria-pressed',String(guideTous));
+  $('[data-act="guide-tous"]').textContent=guideTous?'Un exercice à la fois':'Tous les exercices';
+  vue.querySelectorAll('.journal-exercice').forEach((el,n)=>{
+    el.classList.toggle('guide-actif',i===n);
+    el.hidden=!guideTous&&i!==n;
+  });
+}
+function indexGuide(s) {
+  if(!s.exercices.length) return -1;
+  const prochain=s.exercices.findIndex(x=>x.series.some(y=>!y.faite));
+  return Math.min(s.exercices.length-1,s.guideIndex??(prochain<0?s.exercices.length-1:prochain));
+}
+function choisirEtape(s,i) {
+  if(!s?.exercices[i]||s.semaineJour===undefined) return;
+  s.guideIndex=i;
+  sauver();
+  etapeGuide();
+  if(!guideTous) $('.guide-navigation')?.scrollIntoView({block:'start'});
+}
+async function maintenirEcran() {
+  if(!ecranActif||chemin()!=='seance'||!etat.actif||document.hidden) return;
+  if(verrouEcran&&!verrouEcran.released) return;
+  const obtenu=await navigator.wakeLock.request('screen');
+  if(ecranActif&&chemin()==='seance'&&etat.actif) verrouEcran=obtenu;
+  else await obtenu.release();
+}
+function libererEcran() {
+  ecranActif=false;
+  if(verrouEcran&&!verrouEcran.released) verrouEcran.release().catch(()=>{});
+  verrouEcran=null;
 }
 function horloges() {
   if ($('#chrono') && etat.actif) $('#chrono').textContent=temps(Date.now()-etat.actif.debut);
@@ -346,6 +399,7 @@ function exerciceJournal(exercice, cible = {}) {
 }
 function demarrer(r, planId = r?.planId, semaineJour) {
   if (etat.actif) { aller('seance'); message('Une séance est déjà en cours.'); return; }
+  guideTous=false;
   etat.actif={id:uuid(),nom:r?.nom??'Séance libre',notes:'',debut:Date.now(),reposFin:0,
     planId,semaineJour,exercices:(r?.exercices??[]).map(x=>exerciceJournal(parId(x.id),x))};
   sauver();
@@ -467,6 +521,8 @@ vue.addEventListener('change',ev=>{
 });
 let restauration;
 document.addEventListener('click',async ev=>{
+  const menu=$('.nav-plus[open]');
+  if(menu&&(!menu.contains(ev.target)||ev.target.closest('.nav-plus-liens a'))) menu.open=false;
   const b=ev.target.closest('button[data-act]');
   if (!b || !etat) return;
   const {act,id,i,j}=b.dataset;
@@ -477,6 +533,20 @@ document.addEventListener('click',async ev=>{
   try {
     if (semaine.action(b)||planning.action(b)) return;
     switch(act) {
+      case 'guide-avant': choisirEtape(s,indexGuide(s)-1);break;
+      case 'guide-apres': choisirEtape(s,indexGuide(s)+1);break;
+      case 'guide-choisir': choisirEtape(s,Number(i));break;
+      case 'guide-tous': guideTous=!guideTous;etapeGuide();break;
+      case 'guide-ecran':
+        if(ecranActif) libererEcran();
+        else {
+          ecranActif=true;
+          try {await maintenirEcran();}
+          catch {libererEcran();throw Error('Ce navigateur ne peut pas garder l’écran allumé.');}
+        }
+        b.setAttribute('aria-pressed',String(ecranActif));
+        message(ecranActif?'L’écran reste allumé pendant cette séance.':'L’écran peut se mettre en veille.');
+        break;
       case 'pack-hors-ligne': {
         if (!('caches' in window)) throw Error('Le stockage hors ligne est indisponible dans ce navigateur.');
         b.disabled=true;
@@ -528,16 +598,20 @@ document.addEventListener('click',async ev=>{
         const suivant=index+(act==='monter-ex'?-1:1);
         if(s.exercices[suivant]) {
           [s.exercices[suivant],s.exercices[index]]=[x,s.exercices[suivant]];
+          if(s.semaineJour!==undefined) s.guideIndex=suivant;
           actualiserJournal('.journal-exercice[data-i="'+suivant+'"] [data-act="exercice"]');
         }
         break;
       }
       case 'remplacer-ex': choixPourSeance(Number(i));break;
       case 'indisponible': choixIndisponible(Number(i));break;
+      case 'indisponible-poste': choixIndisponible(Number(i),b.dataset.poste);break;
+      case 'indisponible-chercher': choixPourSeance(Number(i),b.dataset.poste);break;
       case 'indisponible-ok': {
-        const station=poste(parId(x.id)??x);
-        remplacerEx(Number(i),id,station??'');
-        message('Exercice remplacé pour cette séance.');
+        const station=b.dataset.poste||'';
+        const scindee=x.superset&&x.series.some(y=>y.faite);
+        remplacerEx(Number(i),id,station);
+        message(scindee?'Exercice remplacé. Les séries restantes sont sorties de la supersérie.':'Exercice remplacé pour cette séance.');
         break;
       }
       case 'remplacer-ex-ok':
@@ -570,6 +644,7 @@ document.addEventListener('click',async ev=>{
         break;
       }
       case 'reprendre-serie': {
+        if(x.series[Number(j)].faite) break;
         const precedentes=precedent(x)?.series.filter(y=>y.faite) ?? [];
         const modele=precedentes[Number(j)] ?? precedentes.at(-1);
         if(modele) {
@@ -586,10 +661,20 @@ document.addEventListener('click',async ev=>{
         const ligne=b.closest('.series');
         if ([...b.closest('.bloc-serie').querySelectorAll('input')].some(el=>!el.validity.valid)) throw Error('Vérifiez les valeurs de cette série.');
         const y=x.series[Number(j)];
+        if(s.semaineJour!==undefined&&s.guideIndex===undefined) s.guideIndex=Number(i);
         y.faite=!y.faite;
-        if(y.faite) s.reposFin=Date.now()+reposApres(s.exercices,x,Number(j),etat.repos)*1000;
+        if(y.faite) {
+          const duree=reposApres(s.exercices,x,Number(j),etat.repos);
+          s.reposFin=Date.now()+duree*1000;
+          s.reposJeton=y.reposJeton=duree?uuid():undefined;
+        } else if(y.reposJeton&&y.reposJeton===s.reposJeton) {
+          s.reposFin=0;
+          s.reposJeton=undefined;
+        }
         $('[data-mode-i="'+i+'"]').disabled=x.series.some(y=>y.faite);
         b.setAttribute('aria-pressed',String(y.faite));
+        const raccourci=$('[data-act="reprendre-serie"]',b.closest('.bloc-serie'));
+        if(raccourci) raccourci.hidden=y.faite;
         ligne.classList.toggle('done',y.faite);
         sauver();horloges();etapeGuide();break;
       }
@@ -597,11 +682,12 @@ document.addEventListener('click',async ev=>{
       case 'repos-plus': {
         const maintenant=Date.now();
         const delta=act==='repos-plus'?15000:-15000;
+        if(s.reposFin<=maintenant) s.reposJeton=undefined;
         s.reposFin=maintenant+Math.min(600000,Math.max(0,Math.max(0,s.reposFin-maintenant)+delta));
         sauver();horloges();break;
       }
       case 'calculer-charge': calculerCharge();break;
-      case 'stop-repos': s.reposFin=0;sauver();horloges();break;
+      case 'stop-repos': s.reposFin=0;s.reposJeton=undefined;sauver();horloges();break;
       case 'annuler': confirmation('Annuler cette séance ?','Le brouillon et ses séries seront effacés.','annuler-ok');break;
       case 'annuler-ok': etat.actif=null;dialogue.close();sauver();aller('accueil');break;
       case 'terminer':
@@ -657,6 +743,7 @@ function ajouterEx(id) {
   const s=etat.actif;
   if(!s||s.exercices.length>=60) throw Error('Cette séance ne peut pas recevoir un autre exercice.');
   s.exercices.push(exerciceJournal(parId(id)));
+  if(s.semaineJour!==undefined) s.guideIndex=s.exercices.length-1;
   dialogue.close();sauver();
   aller('seance');
   requestAnimationFrame(()=>{
@@ -677,11 +764,14 @@ function remplacerEx(index,id,station) {
   const nouveau=exerciceJournal(parId(id),cible);
   if(ancien.superset) nouveau.superset=ancien.superset;
   if(preserver&&validees.length) {
+    delete ancien.superset;
+    delete nouveau.superset;
     ancien.series=validees;
     exercices.splice(index+1,0,nouveau);
     index++;
   } else exercices[index]=nouveau;
   if(station) etat.actif.postesBloques=[...new Set([...(etat.actif.postesBloques??[]),station])];
+  if(etat.actif.semaineJour!==undefined) etat.actif.guideIndex=index;
   dialogue.close();actualiserJournal('.journal-exercice[data-i="'+index+'"] input[required]');
 }
 dialogue.addEventListener('close',()=>{if(!dialogue.open){dialogue.innerHTML='';restauration=null;}});
@@ -732,6 +822,8 @@ dialogue.addEventListener('submit',async ev=>{
       const x={id:form.dataset.id||uuid(),nom:val('nom'),muscle:val('muscle'),materiel:val('materiel'),conseil:val('conseil')};
       if(!form.dataset.id&&etat.persos.length>=1000)throw Error('Limite de 1 000 exercices personnels atteinte.');
       etat.persos=[...etat.persos.filter(a=>a.id!==x.id),x];
+      filtre={nom:'',muscle:'',materiel:'',lieu:'',categorie:'',collection:'personnels'};
+      limiteCatalogue=30;
     }
     if(form.dataset.form==='import') {
       const input=data.get('fichier');
@@ -756,7 +848,15 @@ try {
   etat=await ouvrir();
   revision=etat.revision??0;
   afficher();
-  addEventListener('hashchange',()=>afficher(true));
+  addEventListener('hashchange',()=>{
+    if(dialogue.open) dialogue.close();
+    if(chemin()!=='seance') libererEcran();
+    afficher(true);
+  });
+  document.addEventListener('visibilitychange',()=>maintenirEcran().catch(()=>{
+    libererEcran();
+    $('[data-act="guide-ecran"]')?.setAttribute('aria-pressed','false');
+  }));
   setInterval(horloges,1000);
   navigator.serviceWorker?.register('./sw.js').catch(()=>{});
 } catch {

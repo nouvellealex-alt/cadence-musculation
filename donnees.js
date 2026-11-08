@@ -70,6 +70,8 @@ export function verifier(a) {
     (x.superset === undefined || groupesSuperset.includes(x.superset));
   const seance = x => x && nom(x.id) && texte(x.nom) && texte(x.notes,3000) && date(x.debut) &&
     (x.semaineJour === undefined || entier(x.semaineJour,0,6)) &&
+    (x.guideIndex === undefined || entier(x.guideIndex,0,59)) &&
+    (x.reposJeton === undefined || nom(x.reposJeton)) &&
     (x.postesBloques === undefined || liste(x.postesBloques,100,nom)) &&
     (x.planId === undefined || nom(x.planId)) && liste(x.exercices,60,m);
   const ids = new Set(catalogue.map(x=>x.id));
