@@ -1,7 +1,7 @@
 import { mouvements, dessin } from './mouvements.js';
 import { catalogue, modeles } from './exercices.js';
 import { creerPlanning, jourLocal, ajouterJours } from './planning.js';
-import { creerSemaine, reposTexte } from './semaine.js';
+import { creerSemaine, reposTexte, lireImport, collageImport } from './semaine.js';
 import { alternatives, poste, posteDisponible, postesPossibles } from './alternatives.js';
 import { ouvrir, ecrire, nouveau, verifier, uuid, chiffrer, dechiffrer, volume, records } from './donnees.js';
 import { modes, mode, types, champsSerie, effort, groupesSuperset, initialiserSerie, decrireSerie, mesureProgression, indicateurs, volumeSerie, groupeMesure, reposApres, disques, csvSeances } from './journal.js';
@@ -136,6 +136,9 @@ function precedent(exercice) {
 }
 function inputSerie(champ, valeur, attrs, libelle, requis=true) {
   const [, , , min, max, pas] = champ;
+  if(champ[0]==='kg'&&attrs.includes('data-field="kg"')) {
+    return '<input '+attrs+' aria-label="'+e(libelle)+'" type="text" inputmode="decimal" data-charge-decimale maxlength="10" pattern="[0-9]+([.,][0-9]+)?" value="'+e(valeur)+'" required>';
+  }
   return '<input '+attrs+' aria-label="'+e(libelle)+'" type="number" inputmode="'+(pas===1?'numeric':'decimal')+'" min="'+min+'" max="'+max+'" step="'+pas+'" value="'+e(valeur)+'" '+(requis?'required':'')+'>';
 }
 function carteJournal(x,i) {
@@ -151,7 +154,7 @@ function carteJournal(x,i) {
     (guide?'<details class="details"><summary>Organiser cet exercice</summary><div class="row section">'+gestion+'</div></details>':'');
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
-    const mesure = champs.map(champ=>inputSerie(champ,y[champ[0]],at+' data-field="'+champ[0]+'"',champ[2]+' de la série '+(j+1))).join('');
+    const mesure = champs.map(champ=>inputSerie(champ,champ[0]==='kg'&&!y.faite&&y.kg===0?'':y[champ[0]],at+' data-field="'+champ[0]+'"',champ[2]+' de la série '+(j+1))).join('');
     const precedent=seriesPrecedentes[j];
     const copie = precedent?bout('Précédent · '+e(decrireSerie(x,precedent,nombre)),'reprendre-serie',at+' aria-label="Reprendre les valeurs de la série '+(j+1)+'"'+(y.faite?' hidden':''),'serie-precedente'):'';
     return '<div class="bloc-serie" '+at+'><div class="series journal-serie '+(y.faite?'done':'')+'" data-colonnes="'+champs.length+'"><span>'+(j+1)+'</span>'+mesure+
@@ -329,6 +332,7 @@ function donnees() {
 }
 const planning=creerPlanning({etat:()=>etat,modeles,parId,modal,fermer:()=>dialogue.close(),actualiser,afficher,demarrer,message});
 const semaine=creerSemaine({etat:()=>etat,parId,tous,e,bout,modal,fermer:()=>dialogue.close(),actualiser,afficher,aller,demarrer,message,
+  sauver:async()=>{await sauver();if(verrou) throw Error('Impossible d’enregistrer cette semaine. Recharge Cadence et réessaie.');},
   miniature:x=>miniatureEx(x,mouvements[x.id]),descriptionPrecedente:x=>{
     const dernier=precedent(x);
     return dernier?.series.filter(s=>s.faite).slice(0,3).map(s=>decrireSerie(dernier,s,nombre)).join(' · ')??'';
@@ -487,6 +491,8 @@ function calculerCharge() {
 function lireChamp(el) {
   const {field,i,j} = el.dataset;
   if (!etat.actif || !field) return;
+  const charge=el.hasAttribute('data-charge-decimale')?Number(el.value.replace(',','.')):undefined;
+  if(charge!==undefined) el.setCustomValidity(charge>2000?'La charge doit être au maximum de 2 000 kg.':'');
   if (!el.validity.valid) {
     el.setAttribute('aria-invalid','true');
     return;
@@ -495,7 +501,7 @@ function lireChamp(el) {
   const exercice = etat.actif.exercices[Number(i)];
   const cible = i===undefined ? etat.actif : j===undefined ? exercice : exercice.series[Number(j)];
   if (el.value==='' && ['repos','rpe','superset'].includes(field)) delete cible[field];
-  else cible[field]=el.type==='number'?Number(el.value):el.value;
+  else cible[field]=charge??(el.type==='number'?Number(el.value):el.value);
   sauver();
 }
 function actualiserJournal(selecteur) {
@@ -788,7 +794,7 @@ document.addEventListener('click',async ev=>{
         break;
       }
       case 'importer':
-        modal('Restaurer un fichier','<form class="stack" data-form="import"><label>Fichier de sauvegarde<input name="fichier" type="file" accept=".json,application/json" required></label><label>Code (pour un fichier chiffré)<input name="code" type="password" autocomplete="off" maxlength="100"></label><button class="primary">Vérifier le fichier</button></form>');break;
+        modal('Restaurer un fichier','<form class="stack" data-form="import"><label>Fichier de sauvegarde<input name="fichier" type="file" accept=".json,application/json"></label>'+collageImport+'<label>Code (pour un fichier chiffré)<input name="code" type="password" autocomplete="off" maxlength="100"></label><button class="primary">Vérifier le fichier</button></form>');break;
       case 'restaurer-ok': if(restauration){etat=restauration;restauration=null;dialogue.close();await sauver();afficher();if(!verrou)message('Carnet restauré.');}break;
       case 'effacer': confirmation('Effacer toutes les données ?','Vous pourrez restaurer le carnet si vous avez conservé une sauvegarde.','effacer-ok');break;
       case 'effacer-ok': etat=nouveau();dialogue.close();actualiser();break;
@@ -835,10 +841,10 @@ dialogue.addEventListener('submit',async ev=>{
   ev.preventDefault();
   const form=ev.target;
   if(verrou||!form.reportValidity())return;
-  const data=new FormData(form);
-  const val=k=>String(data.get(k)??'').trim();
   try {
     if (await semaine.formulaire(form)||await planning.formulaire(form)) return;
+    const data=form.dataset.form==='import'?null:new FormData(form);
+    const val=k=>String(data?.get(k)??'').trim();
     if(form.dataset.form==='editer-seance') {
       const item=etat.seances.find(x=>x.id===form.dataset.id);
       if(!val('nom'))throw Error('Saisissez un titre.');
@@ -882,14 +888,13 @@ dialogue.addEventListener('submit',async ev=>{
       limiteCatalogue=30;
     }
     if(form.dataset.form==='import') {
-      const input=data.get('fichier');
-      if(!input?.size||input.size>32_000_000)throw Error('Choisissez un fichier JSON de moins de 32 Mo.');
       const submit=form.querySelector('button');
       submit.disabled=true;
       try {
-        let parsed;
-        try { parsed=JSON.parse(await input.text()); } catch { throw Error('Le fichier ne contient pas de JSON valide.'); }
-        const verifie=verifier(parsed?.format==='cadence-chiffre-v1'?await dechiffrer(parsed,val('code')):parsed);
+        form.querySelector('[data-import-etat]').textContent='Lecture du fichier…';
+        const parsed=await lireImport(form,32_000_000);
+        if(parsed?.format==='cadence-semaine-v1') throw Error('C’est une semaine type. Ouvre Ma semaine → Importer ma semaine.');
+        const verifie=verifier(parsed?.format==='cadence-chiffre-v1'?await dechiffrer(parsed,form.elements.code.value.trim()):parsed);
         if(!form.isConnected)return;
         restauration=verifie;
         confirmation('Remplacer le carnet actuel ?','La sauvegarde contient '+restauration.seances.length+' séance(s) et '+restauration.routines.length+' routine(s). Le carnet actuel sera remplacé.','restaurer-ok');
@@ -897,7 +902,11 @@ dialogue.addEventListener('submit',async ev=>{
       return;
     }
     dialogue.close();actualiser();message('Modifications enregistrées.');
-  } catch(err) {message(err.message);}
+  } catch(err) {
+    const statut=$('[data-import-etat]',form);
+    if(statut) statut.textContent=err.message;
+    else message(err.message);
+  }
 });
 
 try {

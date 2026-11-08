@@ -38,6 +38,8 @@ with sync_playwright() as p:
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.goto(URL+"#semaine")
     page.get_by_role("button",name="Importer ma semaine").click()
+    page.get_by_role("button",name="Importer la semaine",exact=True).click()
+    expect(page.get_by_role("alert")).to_contain_text("Choisis un fichier")
     page.get_by_label("Fichier de semaine Cadence").set_input_files({"name":"semaine.json","mimeType":"application/json","buffer":payload})
     page.get_by_role("button",name="Importer la semaine",exact=True).click()
     expect(page.get_by_role("button",name="Lundi",exact=True)).to_be_visible()
@@ -53,6 +55,9 @@ with sync_playwright() as p:
     expect(page.locator("#chrono")).to_have_count(0)
     premier = page.locator(".journal-exercice").first
     expect(premier.locator(".journal-cible")).to_contain_text("8–12")
+    expect(premier.get_by_label("Charge de la série 1")).to_have_value("")
+    premier.get_by_role("button",name="Valider la série 1").click()
+    expect(premier.locator(".done")).to_have_count(0)
     premier.get_by_role("button",name="Passer pour l’instant").click()
     expect(page.locator(".journal-exercice:visible")).to_contain_text("Développé couché")
     expect(page.locator(".journal-exercice .done")).to_have_count(0)
@@ -101,16 +106,15 @@ with sync_playwright() as p:
     semaine["semaine"]["jours"][0]["exercices"] = [
         cible(id,8,12,90) for id in ["di","dc","lat","tri-barre","cur"]
     ]
-    page.get_by_label("Fichier de semaine Cadence").set_input_files({
-        "name":"test-cinq-exercices.json","mimeType":"application/json","buffer":json.dumps(semaine).encode()
-    })
+    page.get_by_text("Coller le JSON à la place",exact=True).click()
+    page.get_by_label("Contenu JSON").fill(json.dumps(semaine))
     page.get_by_role("button",name="Importer la semaine",exact=True).click()
     page.get_by_role("button",name="Lundi",exact=True).click()
     page.get_by_role("button",name="Choisir par quoi commencer").click()
     page.get_by_role("button",name="4. Extension triceps à la barre droite").click()
     actif=page.locator(".journal-exercice:visible")
     expect(actif).to_contain_text("Extension triceps à la barre droite")
-    actif.get_by_label("Charge de la série 1").fill("17.5")
+    actif.get_by_label("Charge de la série 1").fill("17,5")
     actif.get_by_role("button",name="Valider la série 1").click()
     page.get_by_role("button",name="Choisir un exercice",exact=True).click()
     expect(page.get_by_role("button",name="4. Extension triceps à la barre droite")).to_contain_text("1 / 2 séries")

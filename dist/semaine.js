@@ -1,5 +1,25 @@
 import { verifierCibleRoutine } from './journal.js';
 
+export async function lireImport(form, limite) {
+  const fichier=form.elements.fichier.files[0];
+  const colle=form.elements.json?.value.trim();
+  if(!fichier&&!colle) throw Error('Choisis un fichier dans Fichiers, ou colle son contenu JSON.');
+  if((fichier?.size??colle.length)>limite) throw Error('Ce fichier dépasse la taille autorisée.');
+  let contenu=colle;
+  if(fichier) contenu=await new Promise((resolve,reject)=>{
+    const lecteur=new FileReader();
+    const delai=setTimeout(()=>{reject(Error('Le fichier ne répond pas. Enregistre-le dans Fichiers puis réessaie, ou colle son JSON.'));lecteur.abort();},10000);
+    lecteur.onloadend=()=>clearTimeout(delai);
+    lecteur.onload=()=>resolve(lecteur.result);
+    lecteur.onerror=()=>reject(Error('Impossible de lire ce fichier. Télécharge-le dans Fichiers ou colle son JSON.'));
+    lecteur.readAsText(fichier);
+  });
+  try {return JSON.parse(contenu.replace(/^\uFEFF/,''));}
+  catch {throw Error('Ce fichier ne contient pas de JSON valide.');}
+}
+
+export const collageImport='<details class="details"><summary>Coller le JSON à la place</summary><label>Contenu JSON<textarea name="json" rows="4" spellcheck="false"></textarea></label></details><p data-import-etat role="alert"></p>';
+
 export const joursSemaine = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 export const indexJour = (date=new Date()) => (date.getDay()+6)%7;
 const entier=(n,min,max)=>Number.isInteger(n)&&n>=min&&n<=max;
@@ -32,7 +52,7 @@ export function reposTexte(cible) {
   return fmt(cible.repos)+(cible.reposMax===cible.repos?'':' à '+fmt(cible.reposMax));
 }
 
-export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,afficher,aller,demarrer,message,miniature,descriptionPrecedente}) {
+export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,sauver,afficher,aller,demarrer,message,miniature,descriptionPrecedente}) {
   let selection=null;
   let jourAffiche=indexJour();
   const actuel=()=>etat().semaine??semaineVide();
@@ -114,7 +134,7 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
         break;
       }
       case 'semaine-importer':
-        modal('Importer ma semaine','<form class="stack" data-form="semaine-import"><label>Fichier de semaine Cadence<input type="file" name="fichier" accept=".json,application/json" required></label><p class="muted">L’import remplace votre semaine type. Votre historique, vos routines et votre séance en cours sont conservés.</p><button class="primary">Importer la semaine</button></form>');break;
+        modal('Importer ma semaine','<form class="stack" data-form="semaine-import"><label>Fichier de semaine Cadence<input type="file" name="fichier" accept=".json,application/json"></label>'+collageImport+'<p class="muted">L’import remplace votre semaine type. Votre historique, vos routines et votre séance en cours sont conservés.</p><button class="primary">Importer la semaine</button></form>');break;
       case 'semaine-editer': {
         const j=actuel().jours[jourAffiche];
         modal('Modifier '+joursSemaine[jourAffiche],'<form class="stack" data-form="semaine-edition"><label>Titre de la journée<input name="nom" maxlength="120" value="'+e(j.nom)+'" required></label><div id="semaine-lignes" class="stack">'+j.exercices.map(ligne).join('')+'</div><div class="row">'+bout('Ajouter un exercice','semaine-ajouter-ligne')+'<button class="primary">Enregistrer la journée</button></div><p class="muted">Retirez tous les exercices pour en faire une journée de repos.</p></form>');break;
@@ -155,19 +175,26 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
   async function formulaire(form) {
     const type=form.dataset.form;
     if (!['semaine-import','semaine-edition','semaine-objectif','semaine-deplacer'].includes(type)) return false;
-    const data=new FormData(form);
+    const data=type==='semaine-import'?null:new FormData(form);
     const copie=structuredClone(actuel());
     if(type==='semaine-import') {
-      const f=data.get('fichier');
-      if(!f?.size||f.size>100000) throw Error('Choisissez un fichier de semaine JSON de moins de 100 ko.');
       const submit=form.querySelector('button');
       submit.disabled=true;
       try {
-        let source;
-        try { source=JSON.parse(await f.text()); } catch { throw Error('Le fichier de semaine n’est pas un JSON valide.'); }
+        form.querySelector('[data-import-etat]').textContent='Lecture du fichier…';
+        const source=await lireImport(form,100000);
         if(!form.isConnected) return true;
-        if(source?.format!=='cadence-semaine-v1') throw Error('Ce fichier n’est pas une semaine Cadence.');
-        mutation({...source.semaine,active:true});
+        if(source?.format!=='cadence-semaine-v1') throw Error(source?.schema||source?.format==='cadence-chiffre-v1'?'C’est une sauvegarde complète. Ouvre Plus → Données → Restaurer un fichier.':'Ce fichier n’est pas une semaine Cadence.');
+        const nouvelle=verifier({...source.semaine,active:true});
+        const ancienne=etat().semaine;
+        etat().semaine=nouvelle;
+        try { await sauver(); }
+        catch(erreur) {
+          if(etat().semaine===nouvelle) etat().semaine=ancienne;
+          throw erreur;
+        }
+        if(!form.isConnected) return true;
+        fermer();
         selection=null;
         afficher();
       } finally {submit.disabled=false;}
