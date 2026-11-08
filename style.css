@@ -388,8 +388,10 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
 }
 .journal-guide .timer { font-size: 1.3rem; }
 .guide-navigation #guide-etape, .journal-guide #guide-etape { margin-bottom: 0; color: var(--fg); font-weight: 650; }
+.guide-navigation { scroll-margin-block-start: 88px; }
+#message { pointer-events: none; }
 .journal-exercice.guide-actif { border-color: var(--blue); box-shadow: 0 0 0 1px var(--line); scroll-margin-block-start: 84px; }
-.journal-exercice[hidden], .serie-precedente[hidden] { display: none !important; }
+.journal-exercice[hidden], .serie-precedente[hidden], [data-act="guide-passer"][hidden] { display: none !important; }
 .journal-cible { margin-bottom: 0; }
 .journal-alternative { padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--input); }
 

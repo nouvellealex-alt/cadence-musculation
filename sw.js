@@ -1,4 +1,4 @@
-const version = 'cadence-8';
+const version = 'cadence-9';
 const pack = 'cadence-medias-1';
 const files = ['./', './index.html', './style.css', './journal.css', './planning.css', './app.js', './donnees.js', './exercices.js', './mouvements.js', './medias.js', './journal.js', './planning.js', './semaine.js', './alternatives.js', './marque.svg', './app.webmanifest'];
 self.addEventListener('install', event => event.waitUntil(caches.open(version).then(cache => cache.addAll(files))));

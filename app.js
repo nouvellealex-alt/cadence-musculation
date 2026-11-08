@@ -145,8 +145,8 @@ function carteJournal(x,i) {
   const guide=etat.actif.semaineJour!==undefined;
   const parametres = '<details class="details exercice-options"><summary>Réglages de l’exercice</summary><div class="row filters section"><label>Mode de suivi<select data-mode-i="'+i+'" '+(x.series.some(y=>y.faite)?'disabled':'')+'>'+Object.entries(modes).map(([k,v])=>'<option value="'+k+'" '+(k===mode(x)?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>Repos (s)<input '+numero+' data-field="repos" type="number" min="0" max="600" step="1" placeholder="'+etat.repos+' par défaut" value="'+e(x.repos)+'"></label><label>Supersérie<select '+numero+' data-field="superset"><option value="">Aucune</option>'+choix(groupesSuperset,x.superset)+'</select></label></div><label>Note de l’exercice<textarea '+numero+' data-field="note" maxlength="1000" rows="2">'+e(x.note)+'</textarea></label></details>';
   const gestion=bout('↑','monter-ex',numero+' aria-label="Monter '+e(x.nom)+'"'+(i===0?' disabled':''))+bout('↓','descendre-ex',numero+' aria-label="Descendre '+e(x.nom)+'"'+(i===etat.actif.exercices.length-1?' disabled':''))+bout('Remplacer','remplacer-ex',numero+' aria-label="Remplacer '+e(x.nom)+'"')+bout('Retirer','retirer-ex',numero+' aria-label="Retirer '+e(x.nom)+'"');
-  const peutPasser=guide&&etat.actif.exercices.some((ex,n)=>n!==i&&ex.series.some(y=>!y.faite));
-  const actions='<div class="row">'+(peutPasser?bout('Passer pour l’instant','guide-passer',numero):'')+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(x.nom)+'"')+(guide?'':gestion)+'</div>'+
+  const passer=guide?bout('Passer pour l’instant','guide-passer',numero):'';
+  const actions='<div class="row">'+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(x.nom)+'"')+(guide?'':gestion)+'</div>'+
     (guide?'<details class="details"><summary>Organiser cet exercice</summary><div class="row section">'+gestion+'</div></details>':'');
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
@@ -161,9 +161,9 @@ function carteJournal(x,i) {
   const repos=x.repos??etat.repos;
   const objectif=x.repsCible!==undefined?'<p class="journal-cible"><span class="tag">'+x.series.length+' × '+x.repsCible+(x.repsCible===x.repsMax?'':'–'+x.repsMax)+' rép.</span> <span class="tag">Repos '+e(reposTexte({repos,reposMax:Math.max(repos,x.reposMax)}))+'</span></p>':'';
   const materiel=parId(x.id)?.equipement??x.materiel;
-  return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(x.nom)+'</h2><small>'+e(materiel)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+objectif+(guide&&x.note?'<p class="muted">'+e(x.note)+'</p>':'')+actions+parametres+
+  return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(x.nom)+'</h2><small>'+e(materiel)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+objectif+(guide&&x.note?'<p class="muted">'+e(x.note)+'</p>':'')+passer+(guide?'':actions+parametres)+
     '<div class="series journal-serie series-head" data-colonnes="'+champs.length+'"><span>N°</span>'+champs.map(champ=>'<span>'+champ[1]+'</span>').join('')+'<span>Validée</span></div>'+lignes+
-    '<div class="row spread">'+bout('＋ Ajouter une série','ajouter-serie',numero)+(guide&&i<etat.actif.exercices.length-1?bout('Exercice suivant →','guide-choisir','data-i="'+(i+1)+'"'):'')+'</div></article>';
+    '<div class="row spread">'+bout('＋ Ajouter une série','ajouter-serie',numero)+(guide&&i<etat.actif.exercices.length-1?bout('Exercice suivant →','guide-choisir','data-i="'+(i+1)+'"'):'')+'</div>'+(guide?actions+parametres:'')+'</article>';
 }
 function seance() {
   const s = etat.actif;
@@ -172,9 +172,10 @@ function seance() {
   const champs='<label>Titre<input data-field="nom" maxlength="120" value="'+e(s.nom)+'"></label><label>Notes de séance<textarea data-field="notes" maxlength="3000" rows="2">'+e(s.notes)+'</textarea></label>';
   return titre('ENTRAÎNEMENT',guide?e(s.nom):'Séance en cours','Les modifications sont enregistrées sur cet appareil.')+
     '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'"><div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
-    (guide?'<section class="panel guide-navigation"><p id="guide-etape" aria-live="polite"></p><div class="row">'+bout('← Précédent','guide-avant')+bout('Suivant →','guide-apres')+bout('Choisir un exercice','guide-ouvrir-choix','','primary')+bout('Tous les exercices','guide-tous','aria-pressed="false"')+('wakeLock' in navigator?bout('Écran allumé','guide-ecran','aria-pressed="'+ecranActif+'"'):'')+'</div></section>':'')+
-    (guide?'<details class="details panel"><summary>Titre et notes de séance</summary><div class="stack section">'+champs+'</div></details>':'<section class="panel stack">'+champs+'</section>')+
+    (guide?'<section class="panel guide-navigation"><p id="guide-etape" aria-live="polite"></p><div class="row">'+bout('← Précédent','guide-avant')+bout('Suivant →','guide-apres')+bout('Choisir un exercice','guide-ouvrir-choix','','primary')+'</div></section>':'')+
+    (!guide?'<section class="panel stack">'+champs+'</section>':'')+
     s.exercices.map(carteJournal).join('')+
+    (guide?'<details class="details panel"><summary>Options de séance</summary><div class="stack section">'+champs+'<div class="row">'+bout('Tous les exercices','guide-tous','aria-pressed="false"')+('wakeLock' in navigator?bout('Écran allumé','guide-ecran','aria-pressed="'+ecranActif+'"'):'')+'</div></div></details>':'')+
     (!s.exercices.length?vide('Ajoutez votre premier exercice pour enregistrer une série.'):'')+
     '<div class="row">'+bout('＋ Ajouter un exercice','ajout-ex')+bout('Calculatrices de charge','calculer-charge')+bout('Terminer et enregistrer','terminer','','primary')+bout('Annuler la séance','annuler','','danger')+'</div></div>';
 }
@@ -352,7 +353,8 @@ function etapeGuide() {
   if (!texte||!etat.actif) return;
   const exercices=etat.actif.exercices;
   const i=indexGuide(etat.actif);
-  texte.textContent=i<0?'Ajoutez un exercice pour commencer.':(i+1)+' / '+exercices.length+' · '+exercices[i].nom+(exercices[i+1]?' · Ensuite : '+exercices[i+1].nom:'');
+  const total=exercices.reduce((n,ex)=>n+ex.series.length,0);
+  texte.textContent=i<0?'Ajoutez un exercice pour commencer.':(i+1)+' / '+exercices.length+' · '+exercices[i].nom+' · '+terminees(etat.actif)+' / '+total+' séries validées';
   $('[data-act="guide-avant"]').disabled=i<=0;
   $('[data-act="guide-apres"]').disabled=i<0||i>=exercices.length-1;
   $('[data-act="guide-ouvrir-choix"]').disabled=i<0;
@@ -361,6 +363,8 @@ function etapeGuide() {
   vue.querySelectorAll('.journal-exercice').forEach((el,n)=>{
     el.classList.toggle('guide-actif',i===n);
     el.hidden=!guideTous&&i!==n;
+    const passer=$('[data-act="guide-passer"]',el);
+    passer.hidden=!exercices.some((ex,index)=>index!==n&&ex.series.some(y=>!y.faite));
   });
 }
 function indexGuide(s) {
@@ -368,10 +372,11 @@ function indexGuide(s) {
   const prochain=s.exercices.findIndex(x=>x.series.some(y=>!y.faite));
   return Math.min(s.exercices.length-1,s.guideIndex??(prochain<0?s.exercices.length-1:prochain));
 }
-function choisirEtape(s,i) {
+async function choisirEtape(s,i) {
   if(!s?.exercices[i]||s.semaineJour===undefined) return;
   s.guideIndex=i;
-  sauver();
+  await sauver();
+  if(etat.actif!==s||chemin()!=='seance') return;
   etapeGuide();
   if(!guideTous) $('.guide-navigation')?.scrollIntoView({block:'start'});
 }
@@ -554,6 +559,7 @@ document.addEventListener('click',async ev=>{
           guideTous=false;
           choisirEtape(s,suivant);
           $('[data-act="guide-ouvrir-choix"]')?.focus({preventScroll:true});
+          message('Tu peux revenir à cet exercice avec « Choisir un exercice ».');
         }
         break;
       }
@@ -718,12 +724,26 @@ document.addEventListener('click',async ev=>{
       case 'stop-repos': s.reposFin=0;s.reposJeton=undefined;sauver();horloges();break;
       case 'annuler': confirmation('Annuler cette séance ?','Le brouillon et ses séries seront effacés.','annuler-ok');break;
       case 'annuler-ok': etat.actif=null;dialogue.close();sauver();aller('accueil');break;
+      case 'guide-restantes': {
+        dialogue.close();
+        guideTous=false;
+        choisirEtape(s,s.exercices.findIndex(ex=>ex.series.some(y=>!y.faite)));
+        break;
+      }
       case 'terminer':
+      case 'terminer-partielle': {
         if (!terminees(s)) throw Error('Validez au moins une série pour terminer.');
         if ([...vue.querySelectorAll('.bloc-serie:has(.done) input')].some(el=>!el.validity.valid)) throw Error('Corrigez les valeurs des séries validées.');
         if(etat.seances.length>=20000) throw Error('Limite de 20 000 séances atteinte.');
-        etat.seances.unshift({...s,nom:s.nom.trim()||'Séance libre',fin:Math.max(Date.now(),s.debut),exercices:s.exercices.filter(a=>a.series.some(y=>y.faite)).map(a=>({...a,series:a.series.filter(y=>y.faite)}))});
+        const restantes=s.exercices.reduce((n,ex)=>n+ex.series.filter(y=>!y.faite).length,0);
+        if(act==='terminer'&&s.semaineJour!==undefined&&restantes) {
+          modal('Terminer cette séance ?', '<p>Il reste '+restantes+' '+(restantes===1?'série non validée.':'séries non validées.')+' Seules les séries validées seront enregistrées.</p><div class="row">'+bout('Revenir aux séries restantes','guide-restantes','','primary')+bout('Enregistrer la séance partielle','terminer-partielle')+'</div>');
+          break;
+        }
+        if(dialogue.open) dialogue.close();
+        etat.seances.unshift({...s,partielle:restantes>0,nom:s.nom.trim()||'Séance libre',fin:Math.max(Date.now(),s.debut),exercices:s.exercices.filter(a=>a.series.some(y=>y.faite)).map(a=>({...a,series:a.series.filter(y=>y.faite)}))});
         etat.actif=null;await sauver();aller('stats');if(!verrou) message('Séance enregistrée.');break;
+      }
       case 'details': {
         const item=etat.seances.find(a=>a.id===id);
         modal(e(item.nom),'<p class="muted">'+date.format(item.debut)+' · '+temps(item.fin-item.debut)+' · '+nombre(volume(item))+' kg</p><p>'+e(item.notes)+'</p>'+
