@@ -25,6 +25,8 @@ Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de
 
 Dans **Ma semaine**, créez une semaine vide ou importez un fichier de semaine Cadence. Choisissez les exercices, les fourchettes de répétitions et de repos pour chaque jour. La semaine type reste dans le navigateur et est incluse dans la sauvegarde du carnet. En séance guidée, Cadence affiche un exercice à la fois, garde le repos visible et reprend sur l’exercice consulté après fermeture. La série précédente se reprend en un geste.
 
+Sur iPhone, ouvrez Cadence dans Safari, utilisez **Partager → Sur l’écran d’accueil** et activez **Ouvrir comme app web** si l’option apparaît. Ouvrez ensuite Cadence depuis son icône. Restaurez le carnet dans l’app installée depuis **Plus → Données** si votre historique est stocké dans un autre navigateur ou appareil.
+
 Si un poste est occupé, **Machine indisponible** propose des mouvements proches avec le matériel restant. Choisissez le poste concerné si l’exercice utilise plusieurs équipements. La recherche manuelle depuis cette fenêtre respecte aussi cette exclusion. Le remplacement vaut pour la séance en cours, conserve les séries déjà validées et laisse la nouvelle charge à saisir. Sur les appareils compatibles, **Écran allumé** évite la mise en veille pendant la séance guidée.
 
 ## Organisation du projet
