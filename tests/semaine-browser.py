@@ -84,5 +84,34 @@ with sync_playwright() as p:
     expect(page.locator(".journal-exercice").nth(1).get_by_role("heading",name="Enroulement du buste")).to_be_visible()
     expect(page.locator(".journal-exercice").nth(1).get_by_label("Charge de la série 1")).to_have_count(0)
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+    page.get_by_role("button",name="Terminer et enregistrer").click()
+    page.get_by_role("link",name="Ma semaine",exact=True).click()
+    page.get_by_text("Organiser ma semaine",exact=True).click()
+    page.get_by_role("button",name="Importer ma semaine").click()
+    semaine["semaine"]["jours"][0]["exercices"] = [
+        cible(id,8,12,90) for id in ["di","dc","lat","tri-barre","cur"]
+    ]
+    page.get_by_label("Fichier de semaine Cadence").set_input_files({
+        "name":"test-cinq-exercices.json","mimeType":"application/json","buffer":json.dumps(semaine).encode()
+    })
+    page.get_by_role("button",name="Importer la semaine",exact=True).click()
+    page.get_by_role("button",name="Lundi",exact=True).click()
+    page.get_by_role("button",name="Choisir par quoi commencer").click()
+    page.get_by_role("button",name="4. Extension triceps à la barre droite").click()
+    actif=page.locator(".journal-exercice:visible")
+    expect(actif).to_contain_text("Extension triceps à la barre droite")
+    actif.get_by_label("Charge de la série 1").fill("17.5")
+    actif.get_by_role("button",name="Valider la série 1").click()
+    page.get_by_role("button",name="Choisir un exercice",exact=True).click()
+    expect(page.get_by_role("button",name="4. Extension triceps à la barre droite")).to_contain_text("1 / 2 séries")
+    page.get_by_role("button",name="5. Flexion des biceps").click()
+    expect(actif).to_contain_text("Flexion des biceps")
+    page.reload()
+    expect(actif).to_contain_text("Flexion des biceps")
+    page.get_by_role("button",name="Choisir un exercice",exact=True).click()
+    page.get_by_role("button",name="4. Extension triceps à la barre droite").click()
+    expect(actif.get_by_label("Charge de la série 1")).to_have_value("17.5")
+    expect(actif.locator(".done")).to_have_count(1)
     assert not errors, errors
-    print("Semaine privée, repos éditable, guide, reprise de brouillon et remplacement avec préservation de la série validée : OK.")
+    print("Semaine privée, reprise, remplacement, choix du départ et passage du quatrième au cinquième puis retour : OK.")
