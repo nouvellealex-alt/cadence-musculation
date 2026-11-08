@@ -1,6 +1,6 @@
-const version = 'cadence-3';
+const version = 'cadence-4';
 const pack = 'cadence-medias-1';
-const files = ['./', './index.html', './style.css', './journal.css', './planning.css', './app.js', './donnees.js', './exercices.js', './mouvements.js', './medias.js', './journal.js', './planning.js', './marque.svg', './app.webmanifest'];
+const files = ['./', './index.html', './style.css', './journal.css', './planning.css', './app.js', './donnees.js', './exercices.js', './mouvements.js', './medias.js', './journal.js', './planning.js', './semaine.js', './alternatives.js', './marque.svg', './app.webmanifest'];
 self.addEventListener('install', event => event.waitUntil(caches.open(version).then(cache => cache.addAll(files))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => /^cadence-\d+$/.test(key) && key !== version).map(key => caches.delete(key))))));
 

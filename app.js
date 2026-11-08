@@ -1,6 +1,8 @@
 import { mouvements, dessin } from './mouvements.js';
 import { catalogue, modeles } from './exercices.js';
 import { creerPlanning, jourLocal, ajouterJours } from './planning.js';
+import { creerSemaine, reposTexte } from './semaine.js';
+import { alternatives, poste } from './alternatives.js';
 import { ouvrir, ecrire, nouveau, verifier, uuid, chiffrer, dechiffrer, volume, records } from './donnees.js';
 import { modes, mode, types, champsSerie, effort, groupesSuperset, initialiserSerie, decrireSerie, mesureProgression, indicateurs, volumeSerie, groupeMesure, reposApres, disques, csvSeances } from './journal.js';
 
@@ -9,6 +11,7 @@ const vue = $('#vue');
 const dialogue = $('#dialogue');
 const voies = {
   accueil:['Accueil','M3 11l9-8 9 8v10H3z M9 21v-7h6v7'],
+  semaine:['Ma semaine','M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4 M9 15l2 2 4-4'],
   seance:['Séance','M3 12h18M6 6v12m12-12v12M3 9v6m18-6v6'],
   routines:['Routines','M4 5h16M4 12h16M4 19h16'],
   planning:['Planning','M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4 M8 14h3 M13 17h3'],
@@ -29,7 +32,7 @@ const parId = id => tous().find(x=>x.id===id);
 const choix = (a,v) => a.map(x=>'<option'+(x===v?' selected':'')+'>'+e(x)+'</option>').join('');
 const temps = ms => {const s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
 const terminees = s => s.exercices.flatMap(x=>x.series).filter(x=>x.faite).length;
-const chemin = () => location.hash.slice(1) in voies && Object.hasOwn(voies,location.hash.slice(1)) ? location.hash.slice(1) : 'accueil';
+const chemin = () => Object.hasOwn(voies,location.hash.slice(1)) ? location.hash.slice(1) : etat?.semaine?.active?'semaine':'accueil';
 
 let etat, revision, sauvegarde = Promise.resolve(), verrou = false, flash, periode = '30';
 let progressionEx = '';
@@ -73,6 +76,15 @@ function choixPourSeance(index = null) {
   };
   champ.addEventListener('input',rendre);
   rendre();
+}
+function choixIndisponible(index) {
+  const s=etat.actif;
+  const x=s.exercices[index];
+  const station=poste(parId(x.id)??x);
+  const proposes=alternatives(parId(x.id)??x,tous(),[...new Set([...(s.postesBloques??[]),station].filter(Boolean))]);
+  modal('Machine indisponible','<p class="muted">'+(station?'Poste à éviter pour cette séance · '+e(station):'Choisissez un mouvement compatible avec votre séance.')+'</p>'+
+    '<div class="stack section">'+(proposes.map(({exercice,raison})=>'<article class="panel semaine-exercice"><div class="semaine-miniature">'+miniatureEx(exercice,mouvements[exercice.id])+'</div><div><h3>'+e(exercice.nom)+'</h3><p class="muted">'+e(exercice.equipement||exercice.materiel)+' · '+e(raison)+'</p></div>'+bout('Choisir','indisponible-ok','data-id="'+e(exercice.id)+'" data-i="'+index+'" aria-label="Choisir '+e(exercice.nom)+'"')+'</article>').join('')||vide('Aucune alternative suffisamment proche dans le catalogue.'))+'</div>'+
+    '<div class="row">'+bout('Chercher un autre exercice','remplacer-ex','data-i="'+index+'"')+bout('Fermer sans changer','fermer')+'</div>');
 }
 function choixEx(id='', requete='') {
   const matches=chercherExercices(requete).slice(0,60);
@@ -118,8 +130,11 @@ function carteJournal(x,i) {
   const derniere = precedent(x);
   const champs = champsSerie(x);
   const numero = 'data-i="'+i+'"';
+  const guide=etat.semaine?.active;
   const parametres = '<details class="details exercice-options"><summary>Réglages de l’exercice</summary><div class="row filters section"><label>Mode de suivi<select data-mode-i="'+i+'" '+(x.series.some(y=>y.faite)?'disabled':'')+'>'+Object.entries(modes).map(([k,v])=>'<option value="'+k+'" '+(k===mode(x)?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>Repos (s)<input '+numero+' data-field="repos" type="number" min="0" max="600" step="1" placeholder="'+etat.repos+' par défaut" value="'+e(x.repos)+'"></label><label>Supersérie<select '+numero+' data-field="superset"><option value="">Aucune</option>'+choix(groupesSuperset,x.superset)+'</select></label></div><label>Note de l’exercice<textarea '+numero+' data-field="note" maxlength="1000" rows="2">'+e(x.note)+'</textarea></label></details>';
-  const actions = '<div class="row">'+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('↑','monter-ex',numero+' aria-label="Monter '+e(x.nom)+'"'+(i===0?' disabled':''))+bout('↓','descendre-ex',numero+' aria-label="Descendre '+e(x.nom)+'"'+(i===etat.actif.exercices.length-1?' disabled':''))+bout('Remplacer','remplacer-ex',numero+' aria-label="Remplacer '+e(x.nom)+'"')+bout('Retirer','retirer-ex',numero+' aria-label="Retirer '+e(x.nom)+'"')+'</div>';
+  const gestion=bout('↑','monter-ex',numero+' aria-label="Monter '+e(x.nom)+'"'+(i===0?' disabled':''))+bout('↓','descendre-ex',numero+' aria-label="Descendre '+e(x.nom)+'"'+(i===etat.actif.exercices.length-1?' disabled':''))+bout('Remplacer','remplacer-ex',numero+' aria-label="Remplacer '+e(x.nom)+'"')+bout('Retirer','retirer-ex',numero+' aria-label="Retirer '+e(x.nom)+'"');
+  const actions='<div class="row">'+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(x.nom)+'"')+(guide?'':gestion)+'</div>'+
+    (guide?'<details class="details"><summary>Organiser cet exercice</summary><div class="row section">'+gestion+'</div></details>':'');
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
     const mesure = champs.map(champ=>inputSerie(champ,y[champ[0]],at+' data-field="'+champ[0]+'"',champ[2]+' de la série '+(j+1))).join('');
@@ -129,15 +144,21 @@ function carteJournal(x,i) {
       '<details class="details serie-options"><summary>Options de la série '+(j+1)+(y.type==='Travail'?'':' · '+y.type)+'</summary><div class="row filters"><label>Type<select '+at+' data-field="type" aria-label="Type de la série '+(j+1)+'">'+choix(types,y.type)+'</select></label><label>Effort perçu (RPE)'+inputSerie(effort,y.rpe,at+' data-field="rpe"','RPE de la série '+(j+1),false)+'</label></div><div class="row">'+copie+bout('↑','monter-serie',at+' aria-label="Monter la série '+(j+1)+'"'+(j===0?' disabled':''))+bout('↓','descendre-serie',at+' aria-label="Descendre la série '+(j+1)+'"'+(j===x.series.length-1?' disabled':''))+bout('Supprimer','retirer-serie',at+' aria-label="Supprimer la série '+(j+1)+'"')+'</div></details></div>';
   }).join('');
   const historique = derniere ? ' · Précédent : '+derniere.series.filter(y=>y.faite).slice(0,4).map(y=>decrireSerie(x,y,nombre)).join(' / ') : '';
-  return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(x.nom)+'</h2><small>'+e(x.muscle)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+actions+parametres+
+  const repos=x.repos??etat.repos;
+  const objectif=x.repsCible!==undefined?'<p class="journal-cible"><span class="tag">'+x.series.length+' × '+x.repsCible+(x.repsCible===x.repsMax?'':'–'+x.repsMax)+' rép.</span> <span class="tag">Repos '+e(reposTexte({repos,reposMax:Math.max(repos,x.reposMax)}))+'</span></p>':'';
+  const materiel=parId(x.id)?.equipement??x.materiel;
+  return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(x.nom)+'</h2><small>'+e(materiel)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+objectif+(guide&&x.note?'<p class="muted">'+e(x.note)+'</p>':'')+actions+parametres+
     '<div class="series journal-serie series-head" data-colonnes="'+champs.length+'"><span>N°</span>'+champs.map(champ=>'<span>'+champ[1]+'</span>').join('')+'<span>Validée</span></div>'+lignes+
     bout('＋ Ajouter une série','ajouter-serie',numero)+'</article>';
 }
 function seance() {
   const s = etat.actif;
   if (!s) return titre('ENTRAÎNEMENT','Séance','Commencez librement ou choisissez une routine.')+bout('＋ Démarrer une séance','demarrer','','primary')+' <a class="btn" href="#routines">Voir les routines</a>';
-  return titre('ENTRAÎNEMENT','Séance en cours','Les modifications sont enregistrées sur cet appareil.')+
-    '<div class="stack"><section class="panel stack"><div class="row spread"><span>Durée <span class="timer" id="chrono"></span></span><span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div><label>Titre<input data-field="nom" maxlength="120" value="'+e(s.nom)+'"></label><label>Notes de séance<textarea data-field="notes" maxlength="3000" rows="2">'+e(s.notes)+'</textarea></label></section>'+
+  const guide=etat.semaine?.active;
+  const champs='<label>Titre<input data-field="nom" maxlength="120" value="'+e(s.nom)+'"></label><label>Notes de séance<textarea data-field="notes" maxlength="3000" rows="2">'+e(s.notes)+'</textarea></label>';
+  return titre('ENTRAÎNEMENT',guide?e(s.nom):'Séance en cours','Les modifications sont enregistrées sur cet appareil.')+
+    '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'">'+(guide?'<p id="guide-etape" class="muted"></p>':'')+'<div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
+    (guide?'<details class="details panel"><summary>Titre et notes de séance</summary><div class="stack section">'+champs+'</div></details>':'<section class="panel stack">'+champs+'</section>')+
     s.exercices.map(carteJournal).join('')+
     (!s.exercices.length?vide('Ajoutez votre premier exercice pour enregistrer une série.'):'')+
     '<div class="row">'+bout('＋ Ajouter un exercice','ajout-ex')+bout('Calculatrices de charge','calculer-charge')+bout('Terminer et enregistrer','terminer','','primary')+bout('Annuler la séance','annuler','','danger')+'</div></div>';
@@ -287,7 +308,12 @@ function donnees() {
     '<section class="panel section sources-cadence"><h2>Un carnet ouvert</h2><p class="muted">Cadence est publié sous AGPL-3.0. Les crédits et licences des médias figurent sur chaque fiche.</p><a href="https://github.com/nouvellealex-alt/cadence-musculation" target="_blank" rel="noreferrer">Code source et installation</a></section>';
 }
 const planning=creerPlanning({etat:()=>etat,modeles,parId,modal,fermer:()=>dialogue.close(),actualiser,afficher,demarrer,message});
-const vues = {accueil,seance,routines,planning:planning.rendre,exercices,stats,donnees};
+const semaine=creerSemaine({etat:()=>etat,parId,tous,e,bout,modal,fermer:()=>dialogue.close(),actualiser,afficher,aller,demarrer,message,
+  miniature:x=>miniatureEx(x,mouvements[x.id]),descriptionPrecedente:x=>{
+    const dernier=precedent(x);
+    return dernier?.series.filter(s=>s.faite).slice(0,3).map(s=>decrireSerie(dernier,s,nombre)).join(' · ')??'';
+  }});
+const vues = {accueil,semaine:semaine.rendre,seance,routines,planning:planning.rendre,exercices,stats,donnees};
 function afficher(focus=false) {
   const page=chemin();
   document.documentElement.dataset.theme=etat.theme;
@@ -295,7 +321,16 @@ function afficher(focus=false) {
   vue.innerHTML=vues[page]();
   if ($('#periode')) $('#periode').value=periode;
   horloges();
+  etapeGuide();
   if (focus) vue.focus();
+}
+function etapeGuide() {
+  const texte=$('#guide-etape');
+  if (!texte||!etat.actif) return;
+  const exercices=etat.actif.exercices;
+  const i=exercices.findIndex(x=>x.series.some(y=>!y.faite));
+  texte.textContent=i<0?(exercices.length?'Toutes les séries sont validées.':'Ajoutez un exercice pour commencer.'):(i+1)+' / '+exercices.length+' · '+exercices[i].nom+(exercices[i+1]?' · Ensuite : '+exercices[i+1].nom:'');
+  vue.querySelectorAll('.journal-exercice').forEach((el,n)=>el.classList.toggle('guide-actif',i===n));
 }
 function horloges() {
   if ($('#chrono') && etat.actif) $('#chrono').textContent=temps(Date.now()-etat.actif.debut);
@@ -306,12 +341,13 @@ function exerciceJournal(exercice, cible = {}) {
   const mesure = cible.mesure ?? mode(exercice);
   const {note, repos} = cible;
   const {id,nom,muscle,materiel,conseil} = exercice;
-  return {id,nom,muscle,materiel,conseil,mesure,note,repos,series:Array.from({length:cible.series ?? 1},()=>initialiserSerie(mesure,cible))};
+  const fourchette=cible.repsMax===undefined?{}:{repsCible:cible.reps,repsMax:cible.repsMax,reposMax:cible.reposMax};
+  return {id,nom,muscle,materiel,conseil,mesure,note,repos,...fourchette,series:Array.from({length:cible.series ?? 1},()=>initialiserSerie(mesure,cible))};
 }
-function demarrer(r, planId = r?.planId) {
+function demarrer(r, planId = r?.planId, semaineJour) {
   if (etat.actif) { aller('seance'); message('Une séance est déjà en cours.'); return; }
   etat.actif={id:uuid(),nom:r?.nom??'Séance libre',notes:'',debut:Date.now(),reposFin:0,
-    planId,exercices:(r?.exercices??[]).map(x=>exerciceJournal(parId(x.id),x))};
+    planId,semaineJour,exercices:(r?.exercices??[]).map(x=>exerciceJournal(parId(x.id),x))};
   sauver();
   aller('seance');
 }
@@ -439,7 +475,7 @@ document.addEventListener('click',async ev=>{
   const s=etat.actif;
   const x=s?.exercices[Number(i)];
   try {
-    if (planning.action(b)) return;
+    if (semaine.action(b)||planning.action(b)) return;
     switch(act) {
       case 'pack-hors-ligne': {
         if (!('caches' in window)) throw Error('Le stockage hors ligne est indisponible dans ce navigateur.');
@@ -497,6 +533,13 @@ document.addEventListener('click',async ev=>{
         break;
       }
       case 'remplacer-ex': choixPourSeance(Number(i));break;
+      case 'indisponible': choixIndisponible(Number(i));break;
+      case 'indisponible-ok': {
+        const station=poste(parId(x.id)??x);
+        remplacerEx(Number(i),id,station??'');
+        message('Exercice remplacé pour cette séance.');
+        break;
+      }
       case 'remplacer-ex-ok':
         if (x.id===id) { dialogue.close(); break; }
         if (x.series.some(y=>y.faite)) {
@@ -548,7 +591,7 @@ document.addEventListener('click',async ev=>{
         $('[data-mode-i="'+i+'"]').disabled=x.series.some(y=>y.faite);
         b.setAttribute('aria-pressed',String(y.faite));
         ligne.classList.toggle('done',y.faite);
-        sauver();horloges();break;
+        sauver();horloges();etapeGuide();break;
       }
       case 'repos-moins':
       case 'repos-plus': {
@@ -621,13 +664,24 @@ function ajouterEx(id) {
     derniere?.focus();
   });
 }
-function remplacerEx(index,id) {
+function remplacerEx(index,id,station) {
   const exercices=etat.actif.exercices;
   const ancien=exercices[index];
-  const nouveau=exerciceJournal(parId(id),{series:ancien.series.length,repos:ancien.repos});
-  if(mode(nouveau)===mode(ancien)) nouveau.series=ancien.series.map(y=>({...y,faite:false}));
+  const preserver=station!==undefined;
+  const validees=ancien.series.filter(y=>y.faite);
+  if(preserver&&validees.length===ancien.series.length) throw Error('Toutes les séries de cet exercice sont déjà validées.');
+  if(preserver&&validees.length&&exercices.length>=60) throw Error('La séance ne peut pas contenir un exercice de plus.');
+  const restant=preserver?ancien.series.length-validees.length:ancien.series.length;
+  const repetitions=ancien.repsCible??ancien.series.find(y=>!y.faite)?.reps??8;
+  const cible={series:restant,repos:ancien.repos,reps:repetitions,repsMax:ancien.repsMax,reposMax:ancien.reposMax};
+  const nouveau=exerciceJournal(parId(id),cible);
   if(ancien.superset) nouveau.superset=ancien.superset;
-  exercices[index]=nouveau;
+  if(preserver&&validees.length) {
+    ancien.series=validees;
+    exercices.splice(index+1,0,nouveau);
+    index++;
+  } else exercices[index]=nouveau;
+  if(station) etat.actif.postesBloques=[...new Set([...(etat.actif.postesBloques??[]),station])];
   dialogue.close();actualiserJournal('.journal-exercice[data-i="'+index+'"] input[required]');
 }
 dialogue.addEventListener('close',()=>{if(!dialogue.open){dialogue.innerHTML='';restauration=null;}});
@@ -638,7 +692,7 @@ dialogue.addEventListener('submit',async ev=>{
   const data=new FormData(form);
   const val=k=>String(data.get(k)??'').trim();
   try {
-    if (await planning.formulaire(form)) return;
+    if (await semaine.formulaire(form)||await planning.formulaire(form)) return;
     if(form.dataset.form==='editer-seance') {
       const item=etat.seances.find(x=>x.id===form.dataset.id);
       if(!val('nom'))throw Error('Saisissez un titre.');
