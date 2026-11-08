@@ -145,7 +145,8 @@ function carteJournal(x,i) {
   const guide=etat.actif.semaineJour!==undefined;
   const parametres = '<details class="details exercice-options"><summary>Réglages de l’exercice</summary><div class="row filters section"><label>Mode de suivi<select data-mode-i="'+i+'" '+(x.series.some(y=>y.faite)?'disabled':'')+'>'+Object.entries(modes).map(([k,v])=>'<option value="'+k+'" '+(k===mode(x)?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>Repos (s)<input '+numero+' data-field="repos" type="number" min="0" max="600" step="1" placeholder="'+etat.repos+' par défaut" value="'+e(x.repos)+'"></label><label>Supersérie<select '+numero+' data-field="superset"><option value="">Aucune</option>'+choix(groupesSuperset,x.superset)+'</select></label></div><label>Note de l’exercice<textarea '+numero+' data-field="note" maxlength="1000" rows="2">'+e(x.note)+'</textarea></label></details>';
   const gestion=bout('↑','monter-ex',numero+' aria-label="Monter '+e(x.nom)+'"'+(i===0?' disabled':''))+bout('↓','descendre-ex',numero+' aria-label="Descendre '+e(x.nom)+'"'+(i===etat.actif.exercices.length-1?' disabled':''))+bout('Remplacer','remplacer-ex',numero+' aria-label="Remplacer '+e(x.nom)+'"')+bout('Retirer','retirer-ex',numero+' aria-label="Retirer '+e(x.nom)+'"');
-  const actions='<div class="row">'+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(x.nom)+'"')+(guide?'':gestion)+'</div>'+
+  const peutPasser=guide&&etat.actif.exercices.some((ex,n)=>n!==i&&ex.series.some(y=>!y.faite));
+  const actions='<div class="row">'+(peutPasser?bout('Passer pour l’instant','guide-passer',numero):'')+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(x.nom)+'"')+(guide?'':gestion)+'</div>'+
     (guide?'<details class="details"><summary>Organiser cet exercice</summary><div class="row section">'+gestion+'</div></details>':'');
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
@@ -545,6 +546,17 @@ document.addEventListener('click',async ev=>{
       case 'guide-avant': choisirEtape(s,indexGuide(s)-1);break;
       case 'guide-apres': choisirEtape(s,indexGuide(s)+1);break;
       case 'guide-choisir': choisirEtape(s,Number(i));break;
+      case 'guide-passer': {
+        const depart=Number(i);
+        const suivants=s.exercices.slice(depart+1).findIndex(ex=>ex.series.some(y=>!y.faite));
+        const suivant=suivants>=0?depart+1+suivants:s.exercices.slice(0,depart).findIndex(ex=>ex.series.some(y=>!y.faite));
+        if(suivant>=0) {
+          guideTous=false;
+          choisirEtape(s,suivant);
+          $('[data-act="guide-ouvrir-choix"]')?.focus({preventScroll:true});
+        }
+        break;
+      }
       case 'guide-ouvrir-choix': choisirExerciceGuide(s);break;
       case 'guide-selection':
         guideTous=false;
