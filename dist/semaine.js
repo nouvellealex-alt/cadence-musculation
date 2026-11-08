@@ -34,6 +34,7 @@ export function reposTexte(cible) {
 
 export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,afficher,aller,demarrer,message,miniature,descriptionPrecedente}) {
   let selection=null;
+  let jourAffiche=indexJour();
   const actuel=()=>etat().semaine??semaineVide();
   const courant=()=>selection??indexJour();
   const attrs=i=>'data-i="'+i+'"';
@@ -50,6 +51,7 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
   }
   function rendre() {
     const profil=actuel(), i=courant(), jour=profil.jours[i];
+    jourAffiche=i;
     const aujourdHui=indexJour();
     const navigation='<div class="row spread section"><h2>Ma semaine</h2>'+bout('Revenir à aujourd’hui','semaine-aujourdhui')+'</div>'+
       '<div class="semaine-jours" aria-label="Jours de la semaine">'+joursSemaine.map((nom,n)=>bout(nom.slice(0,3)+'.','semaine-jour',attrs(n)+' aria-label="'+nom+'" aria-pressed="'+(n===i)+'"'+(n===aujourdHui?' aria-current="date"':''),'jour-semaine')).join('')+'</div>';
@@ -58,11 +60,13 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
     if (!profil.active) return titre('Ma semaine','Un écran dédié à votre entraînement. Importez une semaine ou composez-la sur cet appareil.')+'<section class="panel stack"><h2>Créer mon carnet personnel</h2><p class="muted">Vos séances, objectifs et charges restent dans votre navigateur.</p><div class="row">'+importation+bout('Partir d’une semaine vide','semaine-activer')+'</div></section>';
     const faite=derniereJournee(i);
     const brouillon=etat().actif;
-    const memeSeance=brouillon?.semaineJour===i&&brouillon.nom===jour.nom;
-    const sousTitre=memeSeance?'En cours':jour.exercices.length?'Séance prévue':'Repos';
+    const memeSeance=brouillon?.semaineJour===i;
+    const memeProgramme=faite?.nom===jour.nom;
+    const sousTitre=memeSeance?'En cours':memeProgramme?(faite.partielle===true?'Séance partielle enregistrée':'Séance réalisée'):jour.exercices.length?'Séance prévue':'Repos';
     const reprendre=bout('Reprendre la séance','semaine-reprendre','','primary');
     const action=memeSeance?reprendre:(!brouillon&&jour.exercices.length?
-      '<div class="row semaine-demarrage">'+bout('Démarrer la séance','semaine-demarrer','','primary')+
+      '<div class="row semaine-demarrage">'+(memeProgramme?bout('Consulter la séance','details','data-id="'+e(faite.id)+'"','primary'):'')+
+      bout(memeProgramme?'Refaire la séance':'Démarrer la séance','semaine-demarrer','',memeProgramme?'':'primary')+
       (jour.exercices.length>1?bout('Choisir par quoi commencer','semaine-choisir-depart'):'')+'</div>':'');
     const autreBrouillon=brouillon&&!memeSeance?'<section class="panel row spread section" aria-label="Séance en cours"><div><p class="eyebrow">SÉANCE EN COURS</p><h2>'+e(brouillon.nom||'Séance sans titre')+'</h2><p class="muted">Terminez cette séance pour en commencer une autre.</p></div>'+reprendre+'</section>':'';
     const historiqueJour=faite?'<section class="panel row spread section" aria-label="Séance enregistrée cette semaine"><div><p class="eyebrow">ENREGISTRÉE CETTE SEMAINE</p><h2>'+e(faite.nom)+'</h2><p class="muted">Séance enregistrée pour le créneau du '+joursSemaine[i].toLocaleLowerCase('fr')+'.</p></div>'+bout('Consulter la séance','details','data-id="'+e(faite.id)+'"')+'</section>':'';
@@ -75,7 +79,7 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
         const img=miniature(ex);
         const historique=descriptionPrecedente(ex);
         return '<li class="panel semaine-exercice"><span class="semaine-numero">'+(n+1)+'</span>'+(img?'<div class="semaine-miniature">'+img+'</div>':'')+'<div><h3>'+e(ex.nom)+'</h3><p class="muted">'+e(ex.equipement||ex.materiel)+(x.note?' · '+e(x.note):'')+'</p><div class="row"><span class="tag">'+e(cibleTexte(x))+'</span><span class="tag">Repos '+e(reposTexte(x))+'</span></div>'+(historique?'<p class="muted semaine-precedent">Précédent · '+e(historique)+'</p>':'')+'</div>'+bout('Voir la fiche','exercice','data-id="'+e(ex.id)+'"')+'</li>';
-      }).join('')+'</ol>'+historiqueJour+
+      }).join('')+'</ol>'+(memeProgramme&&!brouillon?'':historiqueJour)+
       '<details class="panel details section"><summary>Organiser ma semaine</summary><div class="stack section">'+outils+'<div class="row">'+importation+bout('Quitter le mode personnel','semaine-masquer')+'</div></div></details>';
   }
   function ligne(x={}) {
@@ -92,7 +96,7 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
       case 'semaine-masquer': mutation({...actuel(),active:false});break;
       case 'semaine-reprendre': aller('seance');break;
       case 'semaine-choisir-depart': {
-        const jour=actuel().jours[courant()];
+        const jour=actuel().jours[jourAffiche];
         modal('Par quoi veux-tu commencer ?', '<p class="muted">Choisis un exercice. Les numéros indiquent l’ordre conseillé de ta séance.</p><div class="stack choix-ordre">'+jour.exercices.map((x,n)=>{
           const ex=parId(x.id);
           return bout('<span>'+String(n+1)+'. '+e(ex.nom)+'</span><small>'+e(ex.equipement||ex.materiel)+'</small>','semaine-depart-ex',attrs(n));
@@ -101,19 +105,19 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
       }
       case 'semaine-demarrer':
       case 'semaine-depart-ex': {
-        const jour=actuel().jours[courant()];
+        const jour=actuel().jours[jourAffiche];
         const depart=act==='semaine-depart-ex'?Number(i):0;
         if(jour.exercices[depart]) {
           fermer();
-          demarrer(jour,undefined,courant(),depart);
+          demarrer(jour,undefined,jourAffiche,depart);
         }
         break;
       }
       case 'semaine-importer':
         modal('Importer ma semaine','<form class="stack" data-form="semaine-import"><label>Fichier de semaine Cadence<input type="file" name="fichier" accept=".json,application/json" required></label><p class="muted">L’import remplace votre semaine type. Votre historique, vos routines et votre séance en cours sont conservés.</p><button class="primary">Importer la semaine</button></form>');break;
       case 'semaine-editer': {
-        const j=actuel().jours[courant()];
-        modal('Modifier '+joursSemaine[courant()],'<form class="stack" data-form="semaine-edition"><label>Titre de la journée<input name="nom" maxlength="120" value="'+e(j.nom)+'" required></label><div id="semaine-lignes" class="stack">'+j.exercices.map(ligne).join('')+'</div><div class="row">'+bout('Ajouter un exercice','semaine-ajouter-ligne')+'<button class="primary">Enregistrer la journée</button></div><p class="muted">Retirez tous les exercices pour en faire une journée de repos.</p></form>');break;
+        const j=actuel().jours[jourAffiche];
+        modal('Modifier '+joursSemaine[jourAffiche],'<form class="stack" data-form="semaine-edition"><label>Titre de la journée<input name="nom" maxlength="120" value="'+e(j.nom)+'" required></label><div id="semaine-lignes" class="stack">'+j.exercices.map(ligne).join('')+'</div><div class="row">'+bout('Ajouter un exercice','semaine-ajouter-ligne')+'<button class="primary">Enregistrer la journée</button></div><p class="muted">Retirez tous les exercices pour en faire une journée de repos.</p></form>');break;
       }
       case 'semaine-ajouter-ligne': {
         const lignes=document.querySelector('#semaine-lignes');
@@ -133,17 +137,17 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
         break;
       }
       case 'semaine-repos':
-        modal('Passer '+joursSemaine[courant()]+' en repos','<p>Les cibles de ce jour seront retirées de la semaine type. Vos séances enregistrées sont conservées.</p>'+bout('Confirmer le repos','semaine-repos-ok','','primary'));break;
+        modal('Passer '+joursSemaine[jourAffiche]+' en repos','<p>Les cibles de ce jour seront retirées de la semaine type. Vos séances enregistrées sont conservées.</p>'+bout('Confirmer le repos','semaine-repos-ok','','primary'));break;
       case 'semaine-repos-ok': {
         const copie=structuredClone(actuel());
-        copie.jours[courant()]={nom:'Repos',exercices:[]};
+        copie.jours[jourAffiche]={nom:'Repos',exercices:[]};
         mutation(copie);
         break;
       }
       case 'semaine-objectif':
         modal('Mon objectif','<form class="stack" data-form="semaine-objectif"><label>Priorité d’entraînement<textarea name="objectif" maxlength="240">'+e(actuel().objectif)+'</textarea></label><button class="primary">Enregistrer</button></form>');break;
       case 'semaine-deplacer':
-        modal('Déplacer la séance','<form class="stack" data-form="semaine-deplacer"><label>Échanger cette journée avec<select name="jour">'+joursSemaine.map((nom,n)=>n===courant()?'':'<option value="'+n+'">'+nom+'</option>').join('')+'</select></label><button class="primary">Échanger les journées</button></form>');break;
+        modal('Déplacer la séance','<form class="stack" data-form="semaine-deplacer"><label>Échanger cette journée avec<select name="jour">'+joursSemaine.map((nom,n)=>n===jourAffiche?'':'<option value="'+n+'">'+nom+'</option>').join('')+'</select></label><button class="primary">Échanger les journées</button></form>');break;
       default: return false;
     }
     return true;
@@ -172,13 +176,13 @@ export function creerSemaine({etat,parId,tous,e,bout,modal,fermer,actualiser,aff
         const champ=k=>l.querySelector('[name="'+k+'"]').value;
         return {id:champ('id'),note:champ('note').trim(),...Object.fromEntries(['series','reps','repsMax','repos','reposMax'].map(k=>[k,Number(champ(k))]))};
       });
-      copie.jours[courant()]={nom:String(data.get('nom')).trim()||'Repos',exercices};
+      copie.jours[jourAffiche]={nom:String(data.get('nom')).trim()||'Repos',exercices};
       mutation(copie);
     } else if(type==='semaine-objectif') {
       copie.objectif=String(data.get('objectif'));
       mutation(copie);
     } else {
-      const i=courant(), j=Number(data.get('jour'));
+      const i=jourAffiche, j=Number(data.get('jour'));
       if(!entier(j,0,6)||j===i) throw Error('Choisissez un autre jour.');
       [copie.jours[i],copie.jours[j]]=[copie.jours[j],copie.jours[i]];
       selection=j;

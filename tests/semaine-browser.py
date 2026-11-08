@@ -73,6 +73,10 @@ with sync_playwright() as p:
     expect(page.locator(".journal-exercice").first.locator(".done")).to_have_count(1)
     expect(page.locator(".journal-exercice").first.get_by_label("Charge de la série 1")).to_have_value("42")
     page.get_by_role("button",name="Terminer et enregistrer").click()
+    page.get_by_role("button",name="Revenir aux séries restantes").click()
+    expect(page.locator(".journal-exercice:visible")).to_contain_text("Développé incliné")
+    page.get_by_role("button",name="Terminer et enregistrer").click()
+    page.get_by_role("button",name="Enregistrer la séance partielle").click()
     expect(page.get_by_role("heading",name="Progression",exact=True)).to_be_visible()
     page.get_by_role("link",name="Ma semaine",exact=True).click()
     page.get_by_role("button",name="Dimanche",exact=True).click()
@@ -90,6 +94,7 @@ with sync_playwright() as p:
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
 
     page.get_by_role("button",name="Terminer et enregistrer").click()
+    page.get_by_role("button",name="Enregistrer la séance partielle").click()
     page.get_by_role("link",name="Ma semaine",exact=True).click()
     page.get_by_text("Organiser ma semaine",exact=True).click()
     page.get_by_role("button",name="Importer ma semaine").click()
