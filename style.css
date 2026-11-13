@@ -18,6 +18,8 @@
   --danger: #ff929e;
   --sidebar: 234px;
   --navigation-height: 0px;
+  --rest-top: max(6px, env(safe-area-inset-top));
+  --rest-scroll-offset: calc(80px + var(--rest-top));
   --radius: 18px;
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
@@ -393,7 +395,7 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
 
 .journal-guide {
   position: sticky;
-  top: max(6px, env(safe-area-inset-top));
+  top: var(--rest-top);
   z-index: 1;
   align-self: start;
   display: grid;
@@ -407,9 +409,9 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
 }
 .journal-guide .timer { font-size: 1.3rem; }
 .guide-navigation #guide-etape, .journal-guide #guide-etape { margin-bottom: 0; color: var(--fg); font-weight: 650; }
-.guide-navigation { scroll-margin-block-start: calc(88px + env(safe-area-inset-top)); }
+.guide-navigation { scroll-margin-block-start: var(--rest-scroll-offset); }
 #message { pointer-events: none; }
-.journal-exercice.guide-actif { border-color: var(--blue); box-shadow: 0 0 0 1px var(--line); scroll-margin-block-start: calc(84px + env(safe-area-inset-top)); }
+.journal-exercice.guide-actif { border-color: var(--blue); box-shadow: 0 0 0 1px var(--line); scroll-margin-block-start: var(--rest-scroll-offset); }
 .journal-exercice[hidden], .serie-precedente[hidden], [data-act="guide-passer"][hidden] { display: none !important; }
 .journal-cible { margin-bottom: 0; }
 .journal-alternative { padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--input); }
@@ -467,6 +469,7 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
 @media (max-width: 680px) {
   :root {
     --navigation-height: calc(58px + env(safe-area-inset-bottom));
+    --rest-scroll-offset: calc(60px + var(--rest-top));
     scroll-padding-bottom: calc(var(--navigation-height) + 10px);
   }
   body > aside {
@@ -593,13 +596,14 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
   .semaine-exercice > button { grid-column: 2 / -1; justify-self: start; }
   .semaine-numero { width: 1.5rem; height: 1.5rem; }
   .semaine-miniature img, .semaine-miniature svg { height: 54px; }
-  main .journal-guide { padding: 7px 9px; border-left-width: 1px; }
+  main .panel.journal-guide { padding: 4px 8px; border-left-width: 1px; }
   .journal-guide > .row {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 5px;
   }
   .journal-guide > .row > span { font-size: .8rem; white-space: nowrap; }
+  .journal-guide .timer { font-size: 1.35rem; line-height: 1; }
   .journal-guide > .row > .row {
     display: grid;
     grid-template-columns: 44px 44px minmax(0, 1fr);
@@ -607,7 +611,7 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
     justify-self: end;
     width: min(100%, 225px);
   }
-  .journal-guide .row button { min-width: 44px; padding: 4px 5px; font-size: .77rem; line-height: 1.2; }
+  .journal-guide .row button { min-width: 44px; min-height: 44px; padding: 4px 5px; font-size: .77rem; line-height: 1.2; }
   .guide-navigation > .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; gap: 6px; }
   .guide-navigation [data-act="guide-ouvrir-choix"] { grid-column: 1 / -1; }
   .journal-exercice .bloc-serie {
@@ -615,6 +619,7 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
     border: 1px solid var(--line);
     border-radius: 13px;
   }
+  .journal-exercice .bloc-serie:focus-within { border-color: var(--blue); }
   .journal-exercice .bloc-serie .serie-options.details { border: 0; padding-inline: 0; }
   .journal-exercice .bloc-serie .serie-options summary { padding-inline: 6px; }
   .journal-exercice [data-act="guide-passer"] { justify-self: start; color: var(--blue); }
@@ -626,19 +631,15 @@ dialog .semaine-exercice:has(.semaine-miniature) { grid-template-columns: 74px m
   :root:has(input:is([type="text"],[type="number"],[type="search"],[type="password"],:not([type])):focus, textarea:focus) body > aside {
     visibility: hidden;
   }
-  :root:has(main .journal-guide):has(main :is(input, textarea, select):focus) {
-    scroll-padding-block-start: calc(80px + env(safe-area-inset-top));
+  :root:has(main .journal-guide) {
+    scroll-padding-block-start: var(--rest-scroll-offset);
   }
   main:has(.journal-guide) :is(input, textarea, select) {
     scroll-margin-block: 8px;
   }
-  main:has(.journal-guide) :is(input, textarea, select):focus {
-    position: relative;
-    z-index: 2;
-  }
 }
 
-@media (max-width: 680px) and (max-height: 380px) and (pointer: coarse) {
+@media (max-width: 680px) and (max-height: 340px) and (pointer: coarse) {
   :root:has(main .journal-guide):has(main :is(input, textarea, select):focus) {
     scroll-padding-block-start: 0;
   }

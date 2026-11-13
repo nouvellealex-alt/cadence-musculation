@@ -1073,5 +1073,20 @@ export const medias = {
       "poster": "./medias/triceps-coude-dos-video-apercu.webp",
       "posterInstant": 1.31
     }
+  },
+  "tri-haut-halteres-assis": {
+    "images": [],
+    "video": {
+      "src": "./medias/tri-haut-halteres-assis-57.mp4",
+      "source": "https://wger.de/media/exercise-video/211/85f6eb25-a76c-409e-9af9-497794ac0dfb.MOV",
+      "attribution": "https://wger.de/api/v2/video/57/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 57,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/tri-haut-halteres-assis-video-apercu.webp",
+      "posterInstant": 3.197
+    }
   }
 };

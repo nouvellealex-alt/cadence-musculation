@@ -40,7 +40,7 @@ const familles = [
   ]],
   ['Travail des triceps',[
     ['Extension vers le bas','tri','tri-barre','triceps-poulie-unilateral','extension-triceps-elastique'],
-    ['Extension bras relevés','tri-haut','tri-haut-halteres'],
+    ['Extension bras relevés','tri-haut','tri-haut-halteres','tri-haut-halteres-assis'],
     ['Extension couchée','triceps-ez','triceps-couche-halteres'],
     ['Extension vers l’arrière','triceps-coude-dos','triceps-coude-dos-poulie'],
     ['Extension assise guidée','triceps-assis-machine'],

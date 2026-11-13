@@ -182,7 +182,10 @@ function carteJournal(x,i) {
   const remplacable=x.series.some(y=>!y.faite);
   const gestion=bout('↑','monter-ex',numero+' aria-label="Monter '+e(nom)+'"'+(i===0?' disabled':''))+bout('↓','descendre-ex',numero+' aria-label="Descendre '+e(nom)+'"'+(i===etat.actif.exercices.length-1?' disabled':''))+bout('Remplacer','remplacer-ex',numero+' aria-label="Remplacer '+e(nom)+'"'+(remplacable?'':' disabled'))+bout('Retirer','retirer-ex',numero+' aria-label="Retirer '+e(nom)+'"');
   const passer=guide?bout('Passer pour l’instant','guide-passer',numero):'';
-  const actions='<div class="row">'+bout('Voir le mouvement','exercice','data-id="'+e(x.id)+'" data-context="seance"')+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(nom)+'"'+(remplacable?'':' disabled'))+(guide?'':gestion)+'</div>'+
+  const cibleMouvement='data-id="'+e(x.id)+'" data-context="seance"';
+  const lecture=parId(x.id)?.media?.video?bout('▶ Lire la vidéo','lire-video',cibleMouvement):'';
+  const actions='<div class="row">'+lecture+bout('Voir le mouvement','exercice',cibleMouvement)+bout('Machine indisponible','indisponible',numero+' aria-label="Machine indisponible : '+e(nom)+'"'+(remplacable?'':' disabled'))+(guide?'':gestion)+'</div>';
+  const organisation=
     (guide?'<details class="details"><summary>Organiser cet exercice</summary><div class="row section">'+gestion+'</div></details>':'');
   const lignes = x.series.map((y,j)=>{
     const at = numero+' data-j="'+j+'"';
@@ -200,9 +203,9 @@ function carteJournal(x,i) {
   const repos=x.repos??etat.repos;
   const objectif=x.repsCible!==undefined?'<p class="journal-cible"><span class="tag">'+x.series.length+' × '+x.repsCible+(x.repsCible===x.repsMax?'':'–'+x.repsMax)+' rép.</span> <span class="tag">Repos '+e(reposTexte({repos,reposMax:Math.max(repos,x.reposMax)}))+'</span></p>':'';
   const materiel=parId(x.id)?.equipement??x.materiel;
-  return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(nom)+'</h2><small>'+e(materiel)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+objectif+(guide&&x.note?'<p class="muted">'+e(x.note)+'</p>':'')+passer+(guide?'':actions+parametres)+
+  return '<article class="panel journal-exercice" '+numero+'><div class="row spread"><div><h2>'+e(nom)+'</h2><small>'+e(materiel)+historique+'</small></div>'+(x.superset?'<span class="tag">Supersérie '+x.superset+'</span>':'')+'</div>'+objectif+(guide&&x.note?'<p class="muted">'+e(x.note)+'</p>':'')+actions+passer+(guide?'':parametres)+
     '<div class="series journal-serie series-head" data-colonnes="'+champs.length+'"><span>N°</span>'+champs.map(champ=>'<span>'+champ[1]+'</span>').join('')+'<span>Validée</span></div>'+lignes+
-    '<div class="row spread">'+bout('＋ Ajouter une série','ajouter-serie',numero)+(guide&&i<etat.actif.exercices.length-1?bout('Exercice suivant →','guide-choisir','data-i="'+(i+1)+'"'):'')+'</div>'+(guide?actions+parametres:'')+'</article>';
+    '<div class="row spread">'+bout('＋ Ajouter une série','ajouter-serie',numero)+(guide&&i<etat.actif.exercices.length-1?bout('Exercice suivant →','guide-choisir','data-i="'+(i+1)+'"'):'')+'</div>'+(guide?organisation+parametres:'')+'</article>';
 }
 function seance() {
   const s = etat.actif;
@@ -210,7 +213,7 @@ function seance() {
   const guide=s.semaineJour!==undefined;
   const champs='<label>Titre<input data-field="nom" maxlength="120" value="'+e(s.nom)+'"></label><label>Notes de séance<textarea data-field="notes" maxlength="3000" rows="2">'+e(s.notes)+'</textarea></label>';
   return titre('ENTRAÎNEMENT',guide?e(s.nom):'Séance en cours','Les modifications sont enregistrées sur cet appareil.')+
-    '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'"><div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span>Repos <span class="timer" id="repos"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
+    '<div class="stack"><section class="panel stack '+(guide?'journal-guide':'')+'"><div class="row spread">'+(guide?'':'<span>Durée <span class="timer" id="chrono"></span></span>')+'<span class="journal-repos"><span id="repos-libelle" role="status">Repos</span> <span class="timer" id="repos" aria-labelledby="repos-libelle"></span></span><div class="row">'+bout('−15 s','repos-moins','aria-label="Retirer 15 secondes du repos"')+bout('+15 s','repos-plus','aria-label="Ajouter 15 secondes au repos"')+bout('Arrêter le repos','stop-repos')+'</div></div></section>'+
     (guide?'<section class="panel guide-navigation"><p id="guide-etape" aria-live="polite"></p><div class="row">'+bout('← Précédent','guide-avant')+bout('Suivant →','guide-apres')+bout('Choisir un exercice','guide-ouvrir-choix','','primary')+'</div></section>':'')+
     (!guide?'<section class="panel stack">'+champs+'</section>':'')+
     s.exercices.map(carteJournal).join('')+
@@ -272,6 +275,10 @@ const fichiersMedia = x => [
   ...(x.media?.video?[x.media.video.src,x.media.video.poster].filter(Boolean):[])
 ];
 const packMedias = [...new Set(catalogue.flatMap(fichiersMedia))];
+function mediasSemaine() {
+  const ids=new Set((etat.semaine?.jours??[]).flatMap(jour=>jour.exercices.map(x=>x.id)));
+  return [...new Set(catalogue.filter(x=>ids.has(x.id)).flatMap(fichiersMedia))];
+}
 const cacheMedias='cadence-medias-1';
 let operationMedias=false;
 const urlMedia = fichier => new URL(fichier,location.href).href;
@@ -290,7 +297,7 @@ async function actualiserMediaExercice(bouton, exercice) {
     const cache=await caches.open(cacheMedias);
     const reponses=await Promise.all(fichiersMedia(exercice).map(fichier=>cache.match(urlMedia(fichier))));
     if (!bouton.isConnected||bouton.disabled) return;
-    if (reponses.every(Boolean)) {
+    if (reponses.length&&reponses.every(Boolean)) {
       bouton.textContent='Disponible hors ligne';
       bouton.disabled=true;
     }
@@ -311,6 +318,8 @@ async function actualiserPack() {
     statut.textContent=acquis+' sur '+packMedias.length+' médias disponibles hors ligne.';
     retirer.disabled=!fichiers.size;
     telecharger.disabled=acquis===packMedias.length;
+    const semaine=$('[data-portee="semaine"]');
+    if(semaine) semaine.disabled=mediasSemaine().every(fichier=>fichiers.has(urlMedia(fichier)));
   } catch {
     statut.textContent='Impossible de vérifier les médias téléchargés.';
   }
@@ -450,8 +459,9 @@ function accesDonnees() {
     '<section class="panel section"><h2>Effacer le carnet</h2><p class="muted">Cette action efface les séances, les routines, les exercices personnels et le brouillon de cet appareil.</p>'+bout('Effacer mes données','effacer','','danger')+'</section>';
 }
 function donnees() {
+  const medias=mediasSemaine();
   return accesDonnees()+'<section class="panel section stack"><h2>Cadence sur iPhone</h2><p class="muted">Ouvre Cadence depuis une icône sur l’écran d’accueil.</p><p id="etat-hors-ligne" class="muted" role="status">'+e(etatHorsLigne)+'</p><div class="row">'+bout('Installer sur iPhone','installer-iphone')+(navigator.storage?.persist?bout('Protéger le stockage local','stockage-persistant'):'')+'</div></section>'+
-    '<section class="panel section stack sources-cadence"><h2>Démonstrations hors ligne</h2><p class="muted">Enregistrez les médias dans ce navigateur pour les consulter sans réseau.</p><div class="row">'+bout('Télécharger les démonstrations','pack-hors-ligne')+bout('Retirer les médias téléchargés','retirer-pack','disabled')+'</div><p id="etat-pack" role="status"></p></section>'+
+    '<section class="panel section stack sources-cadence"><h2>Démonstrations hors ligne</h2><p class="muted">Enregistrez les médias dans ce navigateur pour les consulter sans réseau.</p><div class="row">'+(medias.length?bout('Télécharger les médias de ma semaine','pack-hors-ligne','data-portee="semaine"','primary'):'')+bout('Télécharger les démonstrations','pack-hors-ligne')+bout('Retirer les médias téléchargés','retirer-pack','disabled')+'</div><p id="etat-pack" role="status"></p></section>'+
     '<section class="panel section sources-cadence"><h2>Un carnet ouvert</h2><p class="muted">Cadence est publié sous AGPL-3.0. Les crédits et licences des médias figurent sur chaque fiche.</p><a href="https://github.com/nouvellealex-alt/cadence-musculation" target="_blank" rel="noreferrer">Code source et installation</a></section>';
 }
 async function sauverImport() {
@@ -540,8 +550,27 @@ function libererEcran() {
   verrouEcran=null;
 }
 function horloges() {
-  if ($('#chrono') && etat.actif) $('#chrono').textContent=temps(Date.now()-etat.actif.debut);
-  if ($('#repos') && etat.actif) $('#repos').textContent=temps(Math.ceil((etat.actif.reposFin-Date.now())/1000)*1000);
+  const seance=etat.actif;
+  if(!seance) return;
+  const maintenant=Date.now();
+  const chrono=$('#chrono');
+  if(chrono) chrono.textContent=temps(maintenant-seance.debut);
+  const repos=$('#repos');
+  if(!repos) return;
+  const secondes=Math.max(0,Math.ceil((seance.reposFin-maintenant)/1000));
+  repos.textContent=temps(secondes*1000);
+  const libelle=$('#repos-libelle');
+  const termine=secondes===0&&Boolean(seance.reposJeton);
+  const texte=termine?'Repos terminé':'Repos';
+  if(libelle.textContent!==texte) libelle.textContent=texte;
+  libelle.toggleAttribute('data-termine',termine);
+  $('[data-act="repos-moins"]').disabled=secondes===0;
+  $('[data-act="stop-repos"]').disabled=secondes===0;
+}
+function annulerReposSiOrigineRetiree(seance,series) {
+  if(!seance.reposJeton||!series.some(serie=>serie.reposJeton===seance.reposJeton)) return;
+  seance.reposFin=0;
+  seance.reposJeton=undefined;
 }
 function actualiser() { sauver(); afficher(); }
 function exerciceJournal(exercice, cible = {}) {
@@ -750,14 +779,16 @@ document.addEventListener('click',async ev=>{
         if (!('caches' in window)) throw Error('Le stockage hors ligne est indisponible dans ce navigateur.');
         if (operationMedias) break;
         operationMedias=true;
+        const semaine=b.dataset.portee==='semaine';
+        const fichiers=semaine?mediasSemaine():packMedias;
         b.disabled=true;
         $('[data-act="retirer-pack"]').disabled=true;
         try {
           const statut=$('#etat-pack');
-          await enregistrerMedias(packMedias,acquis=>{
-            if(statut.isConnected) statut.textContent=acquis+' sur '+packMedias.length+' médias disponibles hors ligne.';
+          await enregistrerMedias(fichiers,acquis=>{
+            if(statut.isConnected) statut.textContent=acquis+' sur '+fichiers.length+' médias téléchargés.';
           });
-          message('Démonstrations prêtes hors ligne.');
+          message(semaine?'Médias disponibles de ta semaine téléchargés.':'Démonstrations prêtes hors ligne.');
         } catch(erreur) {
           if (erreur.name==='QuotaExceededError') throw Error('Il manque de la place pour télécharger tous les médias. Les fichiers déjà téléchargés sont conservés.');
           throw Error('Téléchargement interrompu. Réessaie avec du réseau pour reprendre les fichiers manquants.');
@@ -838,8 +869,10 @@ document.addEventListener('click',async ev=>{
         break;
       }
       case 'lire-video':
-        apercuEx(parId(id),'');
-        $('video',dialogue)?.play().catch(()=>{});
+        apercuEx(parId(id),b.dataset.context||'');
+        $('video',dialogue)?.play().catch(erreur=>{
+          if(dialogue.open&&erreur.name==='NotAllowedError') message('Appuie sur Lecture dans la vidéo.');
+        });
         break;
       case 'exercice': apercuEx(parId(id),b.dataset.context||'');break;
       case 'monter-ex':
@@ -873,7 +906,11 @@ document.addEventListener('click',async ev=>{
       }
       case 'ex-vers-seance': ajouterEx(id);break;
       case 'retirer-ex': if (x.series.some(y=>y.faite)) confirmation('Retirer cet exercice ?','Ses séries validées seront retirées de la séance.','retirer-ex-ok',i);else {s.exercices.splice(Number(i),1);actualiser();}break;
-      case 'retirer-ex-ok': s.exercices.splice(Number(id),1);dialogue.close();actualiser();break;
+      case 'retirer-ex-ok': {
+        const [retire]=s.exercices.splice(Number(id),1);
+        annulerReposSiOrigineRetiree(s,retire.series);
+        dialogue.close();actualiser();break;
+      }
       case 'ajouter-serie':
         if (x.series.length>=100) throw Error('Limite de 100 séries par exercice.');
         x.series.push(initialiserSerie(mode(x),x.series.at(-1)));
@@ -911,10 +948,7 @@ document.addEventListener('click',async ev=>{
         const exercices=s.exercices.slice();
         exercices[Number(i)]={...x,series:x.series.filter((_,numero)=>numero!==rang)};
         const actif={...s,exercices};
-        if(serie.reposJeton&&serie.reposJeton===s.reposJeton) {
-          actif.reposFin=0;
-          actif.reposJeton=undefined;
-        }
+        annulerReposSiOrigineRetiree(actif,[serie]);
         if(await enregistrerChangementSeance({...etat,actif})) {
           if(dialogue.open) dialogue.close();
           if(chemin()==='seance') actualiserJournal('[data-act="ajouter-serie"][data-i="'+i+'"]',false);
@@ -978,8 +1012,11 @@ document.addEventListener('click',async ev=>{
       case 'repos-plus': {
         const maintenant=Date.now();
         const delta=act==='repos-plus'?15000:-15000;
-        if(s.reposFin<=maintenant) s.reposJeton=undefined;
-        s.reposFin=maintenant+Math.min(600000,Math.max(0,Math.max(0,s.reposFin-maintenant)+delta));
+        const restant=s.reposFin-maintenant;
+        const suivant=Math.min(600000,Math.max(0,Math.max(0,restant)+delta));
+        s.reposFin=suivant?maintenant+suivant:0;
+        if(!suivant) s.reposJeton=undefined;
+        else if(restant<=0||!s.reposJeton) s.reposJeton=uuid();
         sauver();horloges();break;
       }
       case 'calculer-charge': calculerCharge();break;
@@ -1273,10 +1310,14 @@ try {
     if(chemin()!=='seance') libererEcran();
     afficher(true);
   });
-  document.addEventListener('visibilitychange',()=>maintenirEcran().catch(()=>{
-    libererEcran();
-    $('[data-act="guide-ecran"]')?.setAttribute('aria-pressed','false');
-  }));
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden) horloges();
+    maintenirEcran().catch(()=>{
+      libererEcran();
+      $('[data-act="guide-ecran"]')?.setAttribute('aria-pressed','false');
+    });
+  });
+  addEventListener('pageshow',horloges);
   setInterval(horloges,1000);
   const indiquerHorsLigne=texte=>{
     etatHorsLigne=texte;
