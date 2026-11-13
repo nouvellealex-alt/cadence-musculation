@@ -6,9 +6,9 @@ import { mouvements, dessin } from '../dist/mouvements.js';
 import { medias } from '../dist/medias.js';
 import { modes } from '../dist/journal.js';
 
-test('le catalogue de 201 fiches conserve les identifiants historiques et les modèles', () => {
+test('le catalogue de 202 fiches conserve les identifiants historiques et les modèles', () => {
   const ids = new Set(catalogue.map(e => e.id));
-  assert.equal(catalogue.length, 201);
+  assert.equal(catalogue.length, 202);
   assert.equal(ids.size, catalogue.length);
   const historiques = 'dc di pom ec sq pre fen ext st rou curlj hip mol tra tir row rowh mil lat inv cur mar tri dip cr gen'.split(' ');
   for (const id of historiques) assert.ok(ids.has(id), id);
@@ -16,8 +16,16 @@ test('le catalogue de 201 fiches conserve les identifiants historiques et les mo
     assert.ok(modele.exercices.length);
     for (const exercice of modele.exercices) assert.ok(ids.has(exercice.id), exercice.id);
   }
-  assert.equal(catalogue.filter(e => e.lieu === 'Salle').length, 147);
+  assert.equal(catalogue.filter(e => e.lieu === 'Salle').length, 148);
   assert.equal(catalogue.filter(e => e.lieu !== 'Salle').length, 54);
+});
+
+test('la démonstration de l’extension assise utilise sa propre fiche et précise le dossier',()=>{
+  const ex=catalogue.find(x=>x.id==='tri-haut-halteres-assis');
+  assert.match(ex.equipement,/banc à dossier/);
+  assert.equal(ex.media?.video.id,57);
+  assert.equal(ex.media?.video.licence,'CC BY-SA 4.0');
+  assert.notEqual(catalogue.find(x=>x.id==='tri-haut-halteres').media?.video?.id,57);
 });
 
 test('chaque fiche décrit un mouvement et annonce son mode de suivi',()=>{

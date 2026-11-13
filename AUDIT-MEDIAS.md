@@ -65,3 +65,4 @@ La revue a comparé l’exercice, le matériel visible et la variante. La qualit
 | incline-machine | `incline-machine-16.mp4` | Poussée inclinée sur une machine à leviers chargée de disques | 19,86 s | 11,92 s |
 | oiseau-halteres-assis | `oiseau-halteres-assis-7.mp4` | Élévation latérale des haltères, assis sur le banc avec le buste penché | 7,60 s | 3,27 s |
 | triceps-coude-dos | `triceps-coude-dos-77.mp4` | Extension du coude à un haltère, buste penché et main libre appuyée sur un banc | 13,10 s | 1,31 s |
+| tri-haut-halteres-assis | `tri-haut-halteres-assis-57.mp4` | Extension des coudes au-dessus de la tête, un haltère tenu à deux mains, assis sur un banc à dossier | 31,97 s | 3,20 s |

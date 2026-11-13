@@ -7,6 +7,9 @@
 .journal-serie.series-head {text-align:center}
 .journal-serie input {text-align:center}
 .journal-serie .check {min-height:44px}
+.journal-repos {display:grid;gap:1px;line-height:1.2}
+#repos-libelle {font-size:.77rem}
+#repos-libelle[data-termine] {color:var(--green);font-weight:750}
 .serie-options summary {font-size:.83rem}
 .serie-options[open] .row {margin:8px 0}
 .bloc-serie {display:grid;gap:4px}

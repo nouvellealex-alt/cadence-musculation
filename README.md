@@ -18,7 +18,7 @@ Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de
 - Recherchez un exercice par nom, muscle, lieu ou matériel. Gardez vos favoris et consultez les démonstrations depuis la séance.
 - Utilisez le calendrier pour distinguer séances prévues et réalisées. Les programmes proposent plusieurs semaines que vous pouvez ajuster.
 - Consultez l’historique et la progression par exercice. Le tonnage cumule les séries en mode **Charge**. Le poids du corps, le lest, l’assistance, la durée et la distance ont leurs propres indicateurs.
-- Dans **Données**, exportez le carnet ou téléchargez le pack de démonstrations. Vous pouvez aussi garder une seule démonstration hors ligne depuis sa fiche. Les vidéos se lisent en boucle avec trois vitesses. Pour une sauvegarde chiffrée, conservez le fichier et son code séparément. La restauration demande les deux.
+- Dans **Données**, exportez le carnet ou téléchargez les médias disponibles de votre semaine ou du catalogue complet. Vous pouvez aussi garder une seule démonstration hors ligne depuis sa fiche. En séance, **Lire la vidéo** lance directement le mouvement quand il existe. Les vidéos se lisent en boucle avec trois vitesses. Pour une sauvegarde chiffrée, conservez le fichier et son code séparément. La restauration demande les deux.
 - Les routines s’échangent par fichier, avec les fiches personnelles qu’elles utilisent. L’import protège les fiches du destinataire et adapte les identifiants en cas de conflit.
 
 ## Ma semaine

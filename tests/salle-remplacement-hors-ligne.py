@@ -63,6 +63,17 @@ with sync_playwright() as playwright:
         "buffer": json.dumps(semaine).encode()
     })
     page.get_by_role("button", name="Importer la semaine", exact=True).click()
+    page.goto(URL + "#donnees")
+    page.get_by_role("button", name="Retirer les médias téléchargés").click()
+    expect(page.locator("#etat-pack")).to_contain_text("0 sur")
+    page.get_by_role("button", name="Télécharger les médias de ma semaine").click()
+    expect(page.locator("#message")).to_have_text("Médias disponibles de ta semaine téléchargés.", timeout=60000)
+    chemins = page.evaluate("caches.open('cadence-medias-1').then(c => c.keys()).then(keys => keys.map(k => k.url))")
+    assert any(url.endswith('/dc-21.mp4') for url in chemins)
+    assert not any(url.endswith('/dc-halteres-17.mp4') for url in chemins)
+    page.get_by_role("button", name="Télécharger les démonstrations", exact=True).click()
+    expect(page.locator("#message")).to_have_text("Démonstrations prêtes hors ligne.", timeout=60000)
+    page.goto(URL + "#semaine")
     page.get_by_role("button", name="Choisir par quoi commencer").click()
     page.get_by_role("button", name="4. Développé couché").click()
     mouvement = page.locator(".journal-exercice:visible")
@@ -81,6 +92,17 @@ with sync_playwright() as playwright:
     contexte.set_offline(True)
     page.reload()
     expect(mouvement.get_by_role("heading", name="Développé couché", exact=True)).to_be_visible()
+    mouvement.get_by_role("button", name="Lire la vidéo").click()
+    page.wait_for_function("document.querySelector('dialog video')?.currentTime > 0")
+    fiche.get_by_role("button", name="Fermer", exact=True).click()
+    assert page.evaluate("""async () => {
+      const lire = plage => fetch('./medias/dc-21.mp4', {headers:{Range:plage}});
+      const debut = await lire('bytes=0-9');
+      const fin = await lire('bytes=-10');
+      const vide = await lire('bytes=-0');
+      return debut.status === 206 && fin.status === 206 && vide.status === 416 &&
+        (await debut.arrayBuffer()).byteLength === 10 && (await fin.arrayBuffer()).byteLength === 10;
+    }""")
     mouvement.get_by_label("Charge de la série 1", exact=True).fill("17,5")
     mouvement.get_by_role("button", name="Valider la série 1", exact=True).click()
     expect(mouvement.locator(".done")).to_have_count(1)

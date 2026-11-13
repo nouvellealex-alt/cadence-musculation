@@ -3,13 +3,15 @@ import base64
 import json
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from playwright.sync_api import expect, sync_playwright
 
 url=os.environ.get("CADENCE_TEST_URL","http://127.0.0.1:8764/").rstrip("/")+"/"
-with sync_playwright() as p:
-    navigateur=p.webkit.launch()
-    contexte=navigateur.new_context(**{**p.devices["iPhone 13"],"viewport":{"width":402,"height":874}},accept_downloads=True)
-    page=contexte.new_page()
+with TemporaryDirectory() as profil, sync_playwright() as p:
+    appareil={**p.devices["iPhone 13"],"viewport":{"width":402,"height":874}}
+    del appareil["default_browser_type"]
+    contexte=p.webkit.launch_persistent_context(profil, **appareil, accept_downloads=True)
+    page=contexte.pages[0]
     erreurs=[]
     page.on("pageerror",lambda erreur:erreurs.append(str(erreur)))
     page.goto(url+"#exercices")
@@ -66,4 +68,5 @@ with sync_playwright() as p:
     expect(reprise.locator(".journal-exercice .done")).to_have_count(30)
     expect(reprise.locator(".journal-exercice:visible")).to_contain_text("Tirage vertical")
     assert not erreurs, erreurs
+    contexte.close()
     print("WebKit : machine privée, export opt-in, 30 séries retrouvées après fermeture hors ligne.")
