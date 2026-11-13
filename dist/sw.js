@@ -1,4 +1,4 @@
-const version = 'cadence-18';
+const version = 'cadence-19';
 const pack = 'cadence-medias-1';
 const files = ['./', './index.html', './style.css', './journal.css', './planning.css', './app.js', './donnees.js', './exercices.js', './mouvements.js', './medias.js', './journal.js', './planning.js', './semaine.js', './correspondances.js', './alternatives.js', './poids.js', './machines.js', './marque.svg', './icone-180.png', './icone-192.png', './icone-512.png', './app.webmanifest'];
 self.addEventListener('install', event => {
