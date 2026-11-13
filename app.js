@@ -241,6 +241,7 @@ function chercherExercices(requete, criteres={}) {
     const retenu=mots.every(mot=>index.includes(mot)) &&
       ['muscle','materiel','lieu','categorie'].every(k=>!criteres[k]||criteres[k]===x[k]) &&
       (criteres.media!=='video'||Boolean(x.media?.video)) &&
+      (criteres.media!=='image'||Boolean(x.media?.images?.length||schemaRevu(x.id)||(x.machine&&photoValide(x.photo)))) &&
       (criteres.collection!=='favoris'||estFavori(x.id)) &&
       (criteres.collection!=='personnels'||etat.persos.includes(x)) &&
       (criteres.collection!=='machines'||x.machine===true) &&
@@ -359,7 +360,7 @@ function cartes() {
   const items = chercherExercices(filtre.nom,filtre);
   const cards=items.slice(0,limiteCatalogue).map(x=>{
     const illustration=miniatureEx(x);
-    return '<article class="panel exercise">'+(illustration?'<div class="miniature">'+illustration+'</div>':'<span class="icon">'+svg(voies.seance[1])+'</span>')+'<h3>'+e(x.nom)+'</h3><p class="muted">'+e(x.muscle)+' · '+e(x.materiel)+'</p><div class="row actions-ex">'+bout('Voir la fiche','exercice','data-id="'+e(x.id)+'"')+etoile(x)+'</div></article>';
+    return '<article class="panel exercise">'+(illustration?'<div class="miniature">'+illustration+'</div>':'<span class="icon">'+svg(voies.seance[1])+'</span>')+'<h3>'+e(x.nom)+'</h3><p class="muted">'+e(x.muscle)+' · '+e(x.materiel)+' · '+(x.media?.video?'Vidéo':illustration?'Images':'Consignes')+'</p><div class="row actions-ex">'+bout('Voir la fiche','exercice','data-id="'+e(x.id)+'"')+(x.media?.video?bout('▶ Lire','lire-video','data-id="'+e(x.id)+'" aria-label="Lire la vidéo de '+e(x.nom)+'"'):'')+etoile(x)+'</div></article>';
   }).join('');
   return '<p class="muted compte-ex" role="status">'+items.length+' exercice'+(items.length===1?'':'s')+' · '+Math.min(items.length,limiteCatalogue)+' affiché'+(items.length===1?'':'s')+'</p>'+
     (cards||vide('Aucun exercice correspondant.'))+(items.length>limiteCatalogue?'<div class="compte-ex">'+bout('Afficher 30 exercices de plus','plus-ex')+'</div>':'');
@@ -384,7 +385,8 @@ function exercices() {
   const films=catalogue.filter(x=>x.media?.video).length;
   const filtresActifs=Object.entries(filtre).filter(([cle,valeur])=>cle!=='nom'&&valeur).length;
   return titre('BIBLIOTHÈQUE','Exercices',catalogue.length+' fiches · '+images+' avec un visuel, dont '+films+' avec vidéo.')+
-    '<section class="panel stack"><label>Rechercher<input id="recherche" type="search" placeholder="Ex. développé couché, dos, haltères" value="'+e(filtre.nom)+'"></label><details class="details filtres-exercices" '+(matchMedia('(min-width: 760px)').matches?'open':'')+'><summary>Filtres<span id="nombre-filtres">'+(filtresActifs?' ('+filtresActifs+')':'')+'</span></summary><div class="row filters">'+select('muscle','Muscles')+select('materiel','Matériel')+select('lieu','Lieu et appui')+select('categorie','Type')+'<label>Démonstration<select data-filter="media"><option value="">Toutes</option><option value="video" '+(filtre.media==='video'?'selected':'')+'>Vidéo</option></select></label></div><div class="row spread"><label>Collection<select data-filter="collection"><option value="">Tout afficher</option><option value="favoris" '+(filtre.collection==='favoris'?'selected':'')+'>Mes favoris</option><option value="recents" '+(filtre.collection==='recents'?'selected':'')+'>Récemment utilisés</option><option value="personnels" '+(filtre.collection==='personnels'?'selected':'')+'>Mes exercices</option><option value="machines" '+(filtre.collection==='machines'?'selected':'')+'>Mes machines</option></select></label></div></details><div class="row">'+bout('＋ Ma machine','creer-machine','','primary')+bout('＋ Exercice personnalisé','creer-ex')+'</div></section><div class="grid section" id="cartes">'+cartes()+'</div>';
+    '<div class="row" aria-label="Type de démonstration">'+[['','Tout'],['video','Vidéos'],['image','Images et schémas']].map(([valeur,nom])=>bout(nom,'filtre-media','data-media="'+valeur+'" aria-pressed="'+(filtre.media===valeur)+'"')).join('')+'</div>'+
+    '<section class="panel stack"><label>Rechercher<input id="recherche" type="search" placeholder="Ex. développé couché, dos, haltères" value="'+e(filtre.nom)+'"></label><details class="details filtres-exercices" '+(matchMedia('(min-width: 760px)').matches?'open':'')+'><summary>Filtres<span id="nombre-filtres">'+(filtresActifs?' ('+filtresActifs+')':'')+'</span></summary><div class="row filters">'+select('muscle','Muscles')+select('materiel','Matériel')+select('lieu','Lieu et appui')+select('categorie','Type')+'<label>Démonstration<select data-filter="media"><option value="">Toutes</option><option value="video" '+(filtre.media==='video'?'selected':'')+'>Vidéo</option><option value="image" '+(filtre.media==='image'?'selected':'')+'>Images et schémas</option></select></label></div><div class="row spread"><label>Collection<select data-filter="collection"><option value="">Tout afficher</option><option value="favoris" '+(filtre.collection==='favoris'?'selected':'')+'>Mes favoris</option><option value="recents" '+(filtre.collection==='recents'?'selected':'')+'>Récemment utilisés</option><option value="personnels" '+(filtre.collection==='personnels'?'selected':'')+'>Mes exercices</option><option value="machines" '+(filtre.collection==='machines'?'selected':'')+'>Mes machines</option></select></label></div></details><div class="row">'+bout('＋ Ma machine','creer-machine','','primary')+bout('＋ Exercice personnalisé','creer-ex')+'</div></section><div class="grid section" id="cartes">'+cartes()+'</div>';
 }
 function courbeEx(seances) {
   const exercices = new Map();
@@ -678,6 +680,7 @@ vue.addEventListener('change',ev=>{
   }
   if (el.dataset.filter) {
     filtre[el.dataset.filter]=el.value;
+    for (const bouton of vue.querySelectorAll('[data-act=filtre-media]')) bouton.setAttribute('aria-pressed',String(bouton.dataset.media===filtre.media));
     limiteCatalogue=30;
     $('#cartes').innerHTML=cartes();
     const actifs=Object.entries(filtre).filter(([cle,valeur])=>cle!=='nom'&&valeur).length;
@@ -828,6 +831,16 @@ document.addEventListener('click',async ev=>{
       case 'ajout-ex':
         if(s.exercices.length>=60) throw Error('Limite de 60 exercices par séance.');
         choixPourSeance();break;
+      case 'filtre-media': {
+        const selecteur=$('[data-filter="media"]');
+        selecteur.value=b.dataset.media;
+        selecteur.dispatchEvent(new Event('change',{bubbles:true}));
+        break;
+      }
+      case 'lire-video':
+        apercuEx(parId(id),'');
+        $('video',dialogue)?.play().catch(()=>{});
+        break;
       case 'exercice': apercuEx(parId(id),b.dataset.context||'');break;
       case 'monter-ex':
       case 'descendre-ex': {
