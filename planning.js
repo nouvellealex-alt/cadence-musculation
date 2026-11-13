@@ -1,5 +1,7 @@
 import { modes, verifierCibleRoutine } from './journal.js';
 import { lireImport, collageImport } from './semaine.js';
+import { catalogue } from './exercices.js';
+import { correspondancesImport, formulaireCorrespondances } from './correspondances.js';
 
 const fr = new Intl.DateTimeFormat('fr-FR', {dateStyle:'full'});
 const moisFr = new Intl.DateTimeFormat('fr-FR', {month:'long', year:'numeric'});
@@ -93,6 +95,31 @@ export function importerRoutine(contenu, persos, parId, identifiant=()=>crypto.r
   return {routine:r,nouveaux};
 }
 
+function preparerRoutine(contenu, exercices) {
+  const cibles=contenu?.routine?.exercices;
+  if (contenu?.format!=='cadence-routine-v1'||!Array.isArray(cibles)||!cibles.length||cibles.length>60) {
+    throw Error('Ce fichier n’est pas une routine Cadence.');
+  }
+  const references=contenu.referencesExercices??[];
+  const definitions=contenu.exercicesPersonnels??[];
+  if (!Array.isArray(references)||references.length>60||!Array.isArray(definitions)||definitions.length>60) {
+    throw Error('Les références d’exercices de cette routine sont invalides.');
+  }
+  const referencesParId=new Map(references.filter(r=>nomValide(r?.id)).map(r=>[r.id,r]));
+  const supplement=cibles.map(cible=>{
+    if (!cible||typeof cible!=='object') return cible;
+    const ref=referencesParId.get(cible.id);
+    return {...cible,nom:cible.nom??ref?.nom,materiel:cible.materiel??ref?.materiel};
+  });
+  const correspondances=correspondancesImport(supplement,exercices,new Set(definitions.map(x=>x?.id).filter(Boolean)));
+  return {
+    demandes:correspondances.demandes,
+    appliquer(choisir) {
+      return {...contenu,routine:{...contenu.routine,exercices:correspondances.appliquer(choisir)}};
+    }
+  };
+}
+
 export function verifierPlanning(value, ids) {
   if (value === undefined) return repertoireVide();
   const erreur = () => { throw Error('Le planning de cette sauvegarde est incompatible.'); };
@@ -155,6 +182,7 @@ export function developperProgramme(programme, debut, semaines, identifiant=()=>
 
 export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,afficher=actualiser,demarrer,message,proposerSemaine,sauver}) {
   let dateActive = jourLocal();
+  let routineProposee;
   const planning = () => etat().planning ??= repertoireVide();
   const routines = () => [...etat().routines,...modeles];
   const routine = id => routines().find(r=>r.id===id);
@@ -309,7 +337,11 @@ export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,affich
         if (!r) return true;
         const ids=dico(r.exercices);
         const exercicesPersonnels=etat().persos.filter(x=>ids.has(x.id)).map(exercicePartage);
-        const fichier = {format:'cadence-routine-v1',routine:verifierRoutine(r,ids),exercicesPersonnels};
+        const referencesExercices=[...ids].map(id=>{
+          const {nom,materiel}=parId(id);
+          return {id,nom,materiel};
+        });
+        const fichier = {format:'cadence-routine-v1',routine:verifierRoutine(r,ids),exercicesPersonnels,referencesExercices};
         const url=URL.createObjectURL(new Blob([JSON.stringify(fichier,null,2)],{type:'application/json'}));
         const lien=document.createElement('a');
         lien.href=url;
@@ -319,10 +351,23 @@ export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,affich
         break;
       }
       case 'planning-import-routine':
+        routineProposee=undefined;
         modal('Importer une routine','<form class="stack" data-form="planning-import-routine"><label>Fichier de routine Cadence<input name="fichier" type="file"></label>'+collageImport+'<p class="muted">Choisis une routine exportée depuis Cadence ou ton fichier de semaine personnelle.</p><button class="primary">Importer</button></form>'); break;
       default: return false;
     }
     return true;
+  }
+
+  async function enregistrerRoutineImportee(contenu) {
+    if (etat().routines.length>=1000) throw Error('Le carnet contient déjà 1 000 routines.');
+    const {routine:r,nouveaux}=importerRoutine(contenu,etat().persos,parId);
+    const id=crypto.randomUUID();
+    const anciennesRoutines=etat().routines, anciensPersos=etat().persos;
+    etat().persos=[...anciensPersos,...nouveaux];
+    etat().routines=[{id,...r},...anciennesRoutines];
+    try { await sauver(); }
+    catch(erreur) {etat().routines=anciennesRoutines;etat().persos=anciensPersos;throw erreur;}
+    fermer();afficher();message('Routine importée.');
   }
 
   async function formulaire(form) {
@@ -383,15 +428,23 @@ export function creerPlanning({etat,modeles,parId,modal,fermer,actualiser,affich
           if (!form.isConnected) return true;
           if (contenu?.format==='cadence-semaine-v1') {proposerSemaine(contenu);return true;}
           if (contenu?.schema||contenu?.format==='cadence-chiffre-v1') throw Error('C’est une sauvegarde complète. Ouvre Plus → Données → Restaurer un fichier.');
-          if (etat().routines.length>=1000) throw Error('Le carnet contient déjà 1 000 routines.');
-          const {routine:r,nouveaux}=importerRoutine(contenu,etat().persos,parId);
-          const id=crypto.randomUUID();
-          const anciennesRoutines=etat().routines, anciensPersos=etat().persos;
-          etat().persos=[...anciensPersos,...nouveaux];
-          etat().routines=[{id,...r},...anciennesRoutines];
-          try { await sauver(); }
-          catch(erreur) {etat().routines=anciennesRoutines;etat().persos=anciensPersos;throw erreur;}
-          fermer();afficher();message('Routine importée.');
+          const proposition=preparerRoutine(contenu,[...catalogue,...etat().persos]);
+          if (proposition.demandes.length) {
+            routineProposee=proposition;
+            modal('Vérifier les exercices importés','<form class="stack" data-form="planning-confirmer-import">'+formulaireCorrespondances(proposition.demandes,e)+'<p data-import-etat role="alert"></p><button class="primary">Importer la routine</button></form>');
+            return true;
+          }
+          await enregistrerRoutineImportee(proposition.appliquer());
+          return true;
+        } finally {submit.disabled=false;}
+      }
+      case 'planning-confirmer-import': {
+        const submit=form.querySelector('button');
+        submit.disabled=true;
+        try {
+          if (!routineProposee) throw Error('Sélectionne à nouveau le fichier.');
+          await enregistrerRoutineImportee(routineProposee.appliquer(numero=>data.get('correspondance-'+numero)));
+          routineProposee=undefined;
           return true;
         } finally {submit.disabled=false;}
       }
