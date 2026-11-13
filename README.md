@@ -10,7 +10,7 @@ Dans ce dossier, avec Python 3 installé :
 python -m http.server 8764 --bind 127.0.0.1 --directory dist
 ```
 
-Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de `dist/` en HTTPS. Gardez le même navigateur et la même adresse pour retrouver votre carnet. Pour changer d’adresse ou d’appareil, exportez les données de l’ancienne instance puis importez le fichier dans la nouvelle.
+Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de `dist/` en HTTPS. Gardez le même navigateur et la même origine (protocole, hôte et port) pour retrouver votre carnet. Un sous-dossier partage le stockage de son origine. Pour isoler une instance, hébergez-la sur sa propre origine. Pour changer d’adresse ou d’appareil, exportez les données de l’ancienne instance puis importez le fichier dans la nouvelle.
 
 ## Parcours
 
@@ -18,7 +18,7 @@ Ouvrez http://127.0.0.1:8764/. Pour auto-héberger le site, servez le contenu de
 - Recherchez un exercice par nom, muscle, lieu ou matériel. Gardez vos favoris et consultez les démonstrations depuis la séance.
 - Utilisez le calendrier pour distinguer séances prévues et réalisées. Les programmes proposent plusieurs semaines que vous pouvez ajuster.
 - Consultez l’historique et la progression par exercice. Le tonnage cumule les séries en mode **Charge**. Le poids du corps, le lest, l’assistance, la durée et la distance ont leurs propres indicateurs.
-- Dans **Données**, exportez le carnet ou téléchargez le pack de démonstrations pour le consulter hors ligne. Pour une sauvegarde chiffrée, conservez le fichier et son code séparément. La restauration demande les deux.
+- Dans **Données**, exportez le carnet ou téléchargez le pack de démonstrations. Vous pouvez aussi garder une seule démonstration hors ligne depuis sa fiche. Les vidéos se lisent en boucle avec trois vitesses. Pour une sauvegarde chiffrée, conservez le fichier et son code séparément. La restauration demande les deux.
 - Les routines s’échangent par fichier, avec les fiches personnelles qu’elles utilisent. L’import protège les fiches du destinataire et adapte les identifiants en cas de conflit.
 
 ## Ma semaine
@@ -40,7 +40,7 @@ Si un poste est occupé, **Machine indisponible** propose des mouvements proches
 - `dist/journal.js` définit les mesures et calculs des séries. `dist/planning.js` gère le calendrier, les programmes et le partage de routines.
 - `dist/semaine.js` valide les semaines importées et gère l’interface personnelle. `dist/alternatives.js` classe les substitutions et écarte le matériel signalé.
 - `dist/exercices.js`, `dist/mouvements.js` et `dist/medias.js` portent le catalogue, les schémas et le registre des médias.
-- `dist/sw.js` installe les ressources locales du site. Changez le numéro de cache à chaque mise à jour des ressources applicatives.
+- `dist/sw.js` installe ensemble les ressources d’une version et sert ce même lot jusqu’à la fermeture des onglets et de l’app installée. Changez le numéro de cache à chaque mise à jour des ressources applicatives. Donnez un nouveau nom à tout fichier média dont le contenu change pour éviter de resservir une ancienne démonstration téléchargée.
 
 ## Vérification
 

@@ -4,19 +4,20 @@
 const poses = {
   debout:'107,39 106,60 107,103 109,85 111,111 107,132 109,157',
   squat:'83,73 90,91 117,125 76,102 82,91 87,129 107,156',
+  squatSmith:'91,70 106,88 122,126 92,106 96,87 91,129 109,157',
   barre:'107,39 106,60 107,103 87,77 91,58 107,132 109,157',
   couche:'62,94 77,104 139,106 90,118 90,90 166,124 158,156',
   pousse:'62,94 77,104 139,106 81,80 85,55 166,124 158,156',
   incline:'71,64 81,78 118,116 65,102 64,78 151,126 149,157',
   inclineHaut:'71,64 81,78 118,116 80,56 86,33 151,126 149,157',
-  pompeBas:'45,115 61,123 119,133 81,140 65,155 149,140 179,155',
-  pompeHaut:'45,83 62,92 117,118 64,122 65,155 147,137 179,155',
+  pompeBas:'48,130 63,133 113,143 87,140 69,157 147,150 180,156',
+  pompeHaut:'53,99 69,107 115,127 69,132 69,157 146,141 180,156',
   ecart:'107,39 106,60 107,103 78,77 54,88 108,132 111,157',
   serre:'107,39 106,60 107,103 87,79 61,76 108,132 111,157',
   presseBas:'63,104 76,116 107,140 90,132 107,130 122,95 153,110',
   presseHaut:'63,104 76,116 107,140 90,132 107,130 137,112 166,86',
-  fente:'102,64 103,83 104,116 103,106 103,129 76,123 73,157',
-  fenteDepart:'102,39 103,60 104,103 103,85 103,111 87,129 73,157',
+  fente:'103,62 110,82 110,126 111,106 111,131 79,128 79,157',
+  fenteDepart:'75,36 83,56 83,99 87,80 90,105 81,128 79,157',
   assis:'80,57 82,77 94,117 84,100 98,110 128,117 131,154',
   jambeHaute:'80,57 82,77 94,117 84,100 98,110 128,117 164,118',
   terre:'79,86 87,102 125,112 84,126 85,150 102,134 109,157',
@@ -35,8 +36,10 @@ const poses = {
   militaireBas:'107,39 106,60 107,103 91,80 90,56 107,132 109,157',
   militaireHaut:'107,39 106,60 107,103 101,38 100,17 107,132 109,157',
   lateral:'107,39 106,60 107,103 80,66 54,71 107,132 109,157',
-  inverseBas:'74,58 86,75 114,105 80,95 74,114 114,133 115,157',
-  inverseHaut:'74,58 86,75 114,105 67,76 47,80 114,133 115,157',
+  inverseBas:'110,48 110,68 110,109 96,81 106,90 94,125 93,155',
+  inverseHaut:'110,48 110,68 110,109 77,76 56,69 94,125 93,155',
+  chevilleDepart:'104,54 103,74 94,111 127,91 150,92 121,121 119,157',
+  chevilleAvance:'113,54 112,74 102,112 128,93 150,92 136,124 119,157',
   curl:'107,39 106,60 107,103 105,86 84,65 107,132 109,157',
   triceps:'108,45 104,66 112,106 101,90 76,77 112,133 115,157',
   dipBas:'99,48 103,67 115,110 123,69 112,92 122,131 140,142',
@@ -62,14 +65,14 @@ const poses = {
   curlInclineHaut:'73,52 85,68 110,109 84,94 72,74 138,116 140,158',
   triHautBas:'101,42 108,63 116,109 111,37 130,47 116,134 116,158',
   triHautHaut:'101,42 108,63 116,109 105,39 102,17 116,134 116,158',
-  abPoulieHaut:'102,48 108,67 117,110 95,91 96,57 119,151 151,157',
-  abPoulieBas:'82,99 93,108 117,110 79,130 76,109 119,151 151,157',
+  abPoulieHaut:'101,49 108,67 117,110 89,84 91,59 119,151 151,157',
+  abPoulieBas:'69,70 82,82 117,110 68,103 61,79 119,151 151,157',
   faceDepart:'108,42 107,64 112,104 89,66 67,60 112,132 117,158',
   faceFin:'108,42 107,64 112,104 86,57 97,48 112,132 117,158',
   presseAssiseBas:'81,49 88,69 94,116 81,94 102,79 132,116 134,157',
   presseAssiseHaut:'81,49 88,69 94,116 113,75 139,77 132,116 134,157',
-  brasTendusHaut:'108,45 106,65 117,107 91,77 74,84 115,133 117,158',
-  brasTendusBas:'108,45 106,65 117,107 106,89 104,115 115,133 117,158',
+  brasTendusHaut:'108,45 106,65 117,107 85,79 64,88 115,133 117,158',
+  brasTendusBas:'108,45 106,65 117,107 103,90 107,113 115,133 117,158',
   rotAssis:'109,48 109,66 109,107 88,78 94,91 93,118 92,155',
   rotAssisTourne:'93,48 96,66 109,107 69,79 79,91 93,118 92,155',
   rotCable:'97,42 99,63 110,102 81,76 66,82 101,130 95,155',
@@ -125,9 +128,9 @@ export const mouvements = {
   dip:fiche('dipHaut','dipBas','paralleles','triceps','Pectoraux, épaules','Descendez sur une amplitude que vous contrôlez.'),
   cr:fiche('crunchBas','crunchHaut','tapis','abdos','—','Évitez de tirer sur la nuque avec les mains.'),
   gen:fiche('suspension','genoux','traction','abdos','Fléchisseurs de hanche','Évitez de balancer les jambes pour amorcer la montée.'),
-  goblet:fiche('gobletHaut','gobletBas','kettlebell','cuisses','Fessiers, adducteurs','Gardez la charge près du buste.'),
+  goblet:fiche('gobletHaut','gobletBas','goblet-halteres','cuisses','Fessiers, adducteurs','Gardez la charge près du buste.'),
   'charniere-kettlebell':fiche('terre','debout','kettlebell','hanche','Ischio-jambiers, dos','Gardez la charge entre les appuis.'),
-  'sq-smith':fiche('barre','squat','smith','cuisses','Fessiers','Réglez les butées.'),
+  'sq-smith':fiche('barre','squatSmith','smith','cuisses','Fessiers','Réglez les butées.'),
   'st-hex':fiche('terre','debout','hex','hanche','Quadriceps, dos','Reposez les deux côtés ensemble.'),
   'tra-assistees':fiche('suspension','traction','assiste','dos','Biceps, avant-bras','Contrôlez la remontée de la plateforme.'),
   'tra-lestees':fiche('suspension','traction','leste','dos','Biceps, avant-bras','Vérifiez l’attache du lest.'),
@@ -135,7 +138,8 @@ export const mouvements = {
   'repulsions-sol':fiche('solDipHaut','solDipBas','sol','triceps','Épaules','Gardez une amplitude confortable.'),
   'fentes-avant':fiche('fenteAvantDepart','fenteAvant','fente-avant','cuisses','Fessiers','Posez le pied entier avant de descendre.'),
   chaise:fiche('debout','chaise','mur','cuisses','Fessiers','Conservez le dos au mur.'),
-  'mollets-corps':fiche('debout','mollet','sol','mollets','—','Gardez les appuis stables.'),
+  'mollets-corps':fiche('debout','mollet','mollets-sol','mollets','—','Gardez les appuis stables.'),
+  'cheville-avancee':fiche('chevilleDepart','chevilleAvance','mur-cheville','mollets','—','Gardez le talon au sol.'),
   marche:fiche('marcheA','marcheB','marche','mollets','Fessiers','Adoptez une foulée régulière.'),
   'tir-neutre':fiche('tirageHaut','tirageBas','poulie-neutre','dos','Biceps, avant-bras','Gardez les paumes face à face.'),
   'rowing-poitrine':fiche('rowSoutienBas','rowSoutienHaut','row-soutien','dos','Biceps, arrière des épaules','Gardez la poitrine en appui.'),
@@ -186,12 +190,14 @@ export function dessin(f, position=0, miniature=false) {
     ligne(position?[[177,35],[197,44]]:[[175,38],[199,38]],'#8ad2ff',4)+
     '<path d="M178 27q10-5 18 2m-4-3 4 3-5 1" fill="none" stroke="#8ad2ff" stroke-width="1.6"/>';
   const disque = point => rail(e(point,-8,0),e(point,8,0))+rond(e(point,-8,0),4,'#7188a4')+rond(e(point,8,0),4,'#7188a4');
-  let devant='', derriere='', pointe=e(p,10,1);
+  let devant='', derriere='', pointe=e(p,10,1), pointeArriere;
   let brasArriere = [e(s,9,3),e(c,11,-1),e(m,13,0)];
   let jambeArriere = [e(h,8,2),e(g,11,1),e(p,12,0)];
   switch (f.materiel) {
     case 'banc-barre': derriere=banc([62,111],[143,111]);devant=barre(m);break;
-    case 'incline-halteres': derriere=banc([66,70],[123,123]);devant=barre(e(m,-2,0));break;
+    case 'incline-halteres':
+      derriere=banc([66,70],[123,123])+disque(brasArriere[2]);
+      devant=disque(m);break;
     case 'halteres': devant=rail(e(m,-9,0),e(m,9,0))+rond(e(m,-8,0),5,'#7188a4')+rond(e(m,8,0),5,'#7188a4');break;
     case 'marteau': devant=rail(e(m,0,-8),e(m,0,8))+rond(e(m,0,-8),5,'#7188a4')+rond(e(m,0,8),5,'#7188a4');break;
     case 'barre-epaule': devant=barre(e(s,0,-4));break;
@@ -201,8 +207,19 @@ export function dessin(f, position=0, miniature=false) {
     case 'flexion': derriere=banc([58,123],[147,123]);devant=rond(e(p,-9,-3),6,'#7188a4');break;
     case 'banc-hanches': derriere=banc([44,116],[80,116]);devant=barre(e(h,0,-8));break;
     case 'banc-un-bras': derriere=banc([41,113],[83,113]);brasArriere=[e(s,9,3),[67,93],[62,111]];devant=rond(m,7,'#7188a4');break;
-    case 'inverse': derriere=banc([101,102],[136,118])+rail([88,79],[102,114]);break;
-    case 'mollets': derriere=rail([98,158],[143,158])+rail([119,67],[138,67])+rail([138,67],[138,157]);break;
+    case 'inverse':
+      derriere=siege(110,120)+pile(162,51);
+      brasArriere=[e(s,14,1),[220-c[0],c[1]],[220-m[0],m[1]]];
+      devant=rail([110,92],[110,119])+rail([103,89],[117,89])+rail([60,45],m)+rail([160,45],brasArriere[2]);break;
+    case 'mollets-sol':
+      pointe=[123,159];
+      pointeArriere=[137,159];
+      break;
+    case 'mollets':
+      derriere=rail([98,158],[143,158])+rail([119,67],[138,67])+rail([138,67],[138,157]);
+      pointe=[123,155];
+      pointeArriere=[137,155];
+      break;
     case 'traction': derriere=rail([63,24],[153,24])+rail([153,24],[153,160]);devant=rail(e(m,-5,-3),e(m,11,-3));break;
     case 'cable-lateral': derriere=rail([42,47],[42,158]);devant=cable([42,148],m);break;
     case 'cable-face': derriere=rail([48,36],[48,158]);devant=cable([48,50],m)+cable(m,brasArriere[2]);break;
@@ -218,12 +235,18 @@ export function dessin(f, position=0, miniature=false) {
     case 'poulie-double': derriere=rail([42,45],[42,157])+rail([164,45],[164,157])+rail([42,45],[164,45]);devant=cable([42,67],m)+cable([164,67],brasArriere[2]);break;
     case 'corde': derriere=rail([49,40],[49,157]);devant=cable([49,43],m)+cable(m,e(m,6,9));break;
     case 'paralleles': derriere=pieds([74,92],[151,92]);break;
-    case 'fente': jambeArriere=[e(h,8,2),position?[140,149]:[128,125],[151,157]];break;
+    case 'fente':
+      jambeArriere=position?[e(h,8,2),[132,154],[158,146]]:[e(h,8,2),[94,129],[97,157]];
+      pointe=e(p,-11,2);
+      pointeArriere=position?[166,159]:e(jambeArriere[2],-6,2);
+      break;
     case 'kettlebell':
       devant=rond(e(m,0,8),8,'#7188a4')+'<ellipse cx="'+m[0]+'" cy="'+(m[1]+1)+'" rx="5" ry="4" fill="none" stroke="#7188a4" stroke-width="3"/>';break;
     case 'smith':
-      derriere=rail([75,25],[75,158])+rail([150,25],[150,158])+rail([75,25],[150,25]);
-      devant=barre(e(s,0,-4));break;
+      derriere=rail([86,25],[86,158])+rail([126,25],[126,158])+rail([86,25],[126,25]);
+      pointe=e(p,-12,2);
+      devant=barre([106,s[1]-4]);
+      break;
     case 'hex':
       devant=ligne([e(m,-20,0),e(m,-11,-8),e(m,21,-8),e(m,34,0),e(m,22,9),e(m,-11,9),e(m,-20,0)],'#7188a4',4)+rond(e(m,-19,0),5,'#7188a4')+rond(e(m,33,0),5,'#7188a4');break;
     case 'assiste':
@@ -237,6 +260,13 @@ export function dessin(f, position=0, miniature=false) {
       if(position) jambeArriere=[e(h,8,2),[131,144],[151,154]];
       break;
     case 'mur': derriere=rail([127,50],[127,160]);break;
+    case 'mur-cheville':
+      derriere=rail([153,49],[153,161]);
+      jambeArriere=[e(h,8,0),[80,137],[64,157]];
+      brasArriere=[e(s,9,3),[129,96],[150,97]];
+      break;
+    case 'goblet-halteres':
+      devant=rail(e(m,0,-11),e(m,0,9))+rond(e(m,0,-10),6,'#7188a4')+rond(e(m,0,8),6,'#7188a4');break;
     case 'marche':
       jambeArriere=[e(h,8,2),position?[90,127]:[132,131],position?[66,151]:[154,153]];
       brasArriere=[e(s,9,3),position?[88,87]:[120,87],position?[82,73]:[135,96]];
@@ -309,10 +339,16 @@ export function dessin(f, position=0, miniature=false) {
   const torse = ['torse','dos','abdos','epaules'].includes(zone);
   const bras = ['biceps','triceps','epaules'].includes(zone);
   const cuisse = ['cuisses','arriere','hanche'].includes(zone);
+  const couleurTronc=torse?bleu:gris;
+  const tronc=f.materiel==='poulie-crunch'&&position
+    ? '<path d="M '+h.join(' ')+' Q 94 110 '+s.join(' ')+'" fill="none" stroke="'+couleurTronc+'" stroke-width="17" stroke-linecap="round"/>'
+    : ligne([h,s],couleurTronc,17);
   const contenu = ligne([[25,163],[195,163]],'#31455b',2)+derriere+
-    ligne(jambeArriere,cuisse?clair:grisFond,9)+ligne(brasArriere,bras?clair:grisFond,7)+
+    ligne(jambeArriere,cuisse?clair:grisFond,9)+
+    (pointeArriere?ligne([jambeArriere[2],pointeArriere],grisFond,6):'')+
+    ligne(brasArriere,bras?clair:grisFond,7)+
     ligne([h,g,p],zone==='mollets'?bleu:gris,10)+ligne([h,g],cuisse?bleu:gris,11)+
-    ligne([h,s],torse?bleu:gris,17)+ligne([s,c,m],bras?bleu:gris,8)+(zone==='avant-bras'?ligne([c,m],bleu,7):'')+
+    tronc+ligne([s,c,m],bras?bleu:gris,8)+(zone==='avant-bras'?ligne([c,m],bleu,7):'')+
     ligne([p,pointe],gris,7)+rond(t,10,gris)+devant;
   return '<svg class="mouvement" viewBox="0 0 220 178" '+(miniature?'aria-hidden="true"':'role="img" aria-label="Schéma de la position '+(position?'finale':'initiale')+'"')+'><rect width="220" height="178" rx="12" fill="#101c2c"/><path d="M16 34h22m-11-11v22m155 98h22m-11-11v22" stroke="#254565"/>'+contenu+'</svg>';
 }

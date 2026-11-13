@@ -31,7 +31,9 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 21,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/dc-video-apercu.webp",
+      "posterInstant": 2.97
     }
   },
   "di": {
@@ -56,7 +58,19 @@ export const medias = {
         "id": 106,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/di-24.mp4",
+      "source": "https://wger.de/media/exercise-video/537/b9c937e9-daeb-42a9-be8e-7a77e368478c.MOV",
+      "attribution": "https://wger.de/api/v2/video/24/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 24,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/di-video-apercu.webp",
+      "posterInstant": 16.464
+    }
   },
   "ec": {
     "images": [
@@ -83,18 +97,7 @@ export const medias = {
     ]
   },
   "pre": {
-    "images": [
-      {
-        "src": "./medias/pre-apercu.webp",
-        "source": "https://wger.de/media/exercise-video/371/db382bd9-f633-47cd-8b02-c52db835e41d.MOV",
-        "attribution": "https://wger.de/api/v2/video/46/",
-        "auteur": "Goulart",
-        "licence": "CC BY-SA 4.0",
-        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-        "id": 46,
-        "modifications": "Image fixe extraite à trois secondes de la vidéo, redimensionnée et convertie en WebP"
-      }
-    ],
+    "images": [],
     "video": {
       "src": "./medias/pre-46.mp4",
       "source": "https://wger.de/media/exercise-video/371/db382bd9-f633-47cd-8b02-c52db835e41d.MOV",
@@ -103,22 +106,13 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 46,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/pre-video-apercu.webp",
+      "posterInstant": 7.71
     }
   },
   "rou-halteres": {
-    "images": [
-      {
-        "src": "./medias/rou-halteres-apercu.webp",
-        "source": "https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV",
-        "attribution": "https://wger.de/api/v2/video/2/",
-        "auteur": "Goulart",
-        "licence": "CC BY-SA 4.0",
-        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-        "id": 2,
-        "modifications": "Image fixe extraite à trois secondes de la vidéo, redimensionnée et convertie en WebP"
-      }
-    ],
+    "images": [],
     "video": {
       "src": "./medias/rou-halteres-2.mp4",
       "source": "https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV",
@@ -127,7 +121,9 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 2,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/rou-halteres-video-apercu.webp",
+      "posterInstant": 5.69
     }
   },
   "curlj": {
@@ -152,31 +148,19 @@ export const medias = {
         "id": 180,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
-  },
-  "row": {
-    "images": [
-      {
-        "src": "./medias/row-84.webp",
-        "source": "https://wger.de/media/exercise-images/109/Barbell-rear-delt-row-1.png",
-        "attribution": "https://wger.de/api/v2/exerciseimage/84/",
-        "auteur": "Everkinetic",
-        "licence": "CC BY-SA 3.0",
-        "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
-        "id": 84,
-        "modifications": "Redimensionnement et conversion WebP"
-      },
-      {
-        "src": "./medias/row-90.webp",
-        "source": "https://wger.de/media/exercise-images/109/Barbell-rear-delt-row-2.png",
-        "attribution": "https://wger.de/api/v2/exerciseimage/90/",
-        "auteur": "Everkinetic",
-        "licence": "CC BY-SA 3.0",
-        "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
-        "id": 90,
-        "modifications": "Redimensionnement et conversion WebP"
-      }
-    ]
+    ],
+    "video": {
+      "src": "./medias/curlj-35.mp4",
+      "source": "https://wger.de/media/exercise-video/365/becaf013-5044-40d0-bae9-7ed60c973737.MOV",
+      "attribution": "https://wger.de/api/v2/video/35/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 35,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/curlj-video-apercu.webp",
+      "posterInstant": 3.918
+    }
   },
   "rowh": {
     "images": [
@@ -223,7 +207,9 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 6,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/lat-video-apercu.webp",
+      "posterInstant": 1.14
     }
   },
   "cur": {
@@ -257,7 +243,9 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 48,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/cur-video-apercu.webp",
+      "posterInstant": 8.88
     }
   },
   "mar": {
@@ -282,7 +270,19 @@ export const medias = {
         "id": 48,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/mar-51.mp4",
+      "source": "https://wger.de/media/exercise-video/272/df069052-2173-4f24-855f-a0eebe729f24.MOV",
+      "attribution": "https://wger.de/api/v2/video/51/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 51,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/mar-video-apercu.webp",
+      "posterInstant": 6.222
+    }
   },
   "fen": {
     "images": [
@@ -319,7 +319,9 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 71,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/tra-video-apercu.webp",
+      "posterInstant": 3.52
     }
   },
   "dip": {
@@ -334,7 +336,19 @@ export const medias = {
         "id": 211,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/dip-64.mp4",
+      "source": "https://wger.de/media/exercise-video/194/d039ec90-474d-47a9-a3ad-bf0b00828c82.MP4",
+      "attribution": "https://wger.de/api/v2/video/64/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 64,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/dip-video-apercu.webp",
+      "posterInstant": 3.289
+    }
   },
   "dc-halteres": {
     "images": [
@@ -367,22 +381,10 @@ export const medias = {
       "licence": "CC BY-SA 4.0",
       "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "id": 17,
-      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio"
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/dc-halteres-video-apercu.webp",
+      "posterInstant": 2.64
     }
-  },
-  "goblet": {
-    "images": [
-      {
-        "src": "./medias/goblet-328.webp",
-        "source": "https://wger.de/media/exercise-images/203/1c052351-2af0-4227-aeb0-244008e4b0a8.jpeg",
-        "attribution": "https://wger.de/api/v2/exerciseimage/328/",
-        "auteur": "philip",
-        "licence": "CC BY-SA 4.0",
-        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-        "id": 328,
-        "modifications": "Redimensionnement et conversion WebP"
-      }
-    ]
   },
   "front-squat": {
     "images": [
@@ -406,7 +408,19 @@ export const medias = {
         "id": 150,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/front-squat-28.mp4",
+      "source": "https://wger.de/media/exercise-video/257/520b98d4-c767-47dd-83e6-850189217925.MOV",
+      "attribution": "https://wger.de/api/v2/video/28/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 28,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/front-squat-video-apercu.webp",
+      "posterInstant": 6.923
+    }
   },
   "curl-barre": {
     "images": [
@@ -454,7 +468,19 @@ export const medias = {
         "id": 20,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/curl-poulie-50.mp4",
+      "source": "https://wger.de/media/exercise-video/95/ab770931-47d3-44fd-aef0-ac7a64c3b794.MOV",
+      "attribution": "https://wger.de/api/v2/video/50/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 50,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/curl-poulie-video-apercu.webp",
+      "posterInstant": 6.27
+    }
   },
   "rowing-poulie": {
     "images": [
@@ -478,7 +504,19 @@ export const medias = {
         "id": 144,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/rowing-poulie-1.mp4",
+      "source": "https://wger.de/media/exercise-video/512/fff4c294-93f0-4926-b3a2-bf59ad4afaa5.MOV",
+      "attribution": "https://wger.de/api/v2/video/1/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 1,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/rowing-poulie-video-apercu.webp",
+      "posterInstant": 2.725
+    }
   },
   "ecarte-halteres": {
     "images": [
@@ -526,7 +564,19 @@ export const medias = {
         "id": 174,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/mil-halteres-12.mp4",
+      "source": "https://wger.de/media/exercise-video/567/64f33c19-1d96-4b7c-af17-6c6a4941c614.MOV",
+      "attribution": "https://wger.de/api/v2/video/12/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 12,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/mil-halteres-video-apercu.webp",
+      "posterInstant": 13.878
+    }
   },
   "triceps-ez": {
     "images": [
@@ -550,7 +600,19 @@ export const medias = {
         "id": 61,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/triceps-ez-61.mp4",
+      "source": "https://wger.de/media/exercise-video/246/75eb8c88-922e-45c5-8be3-ac073f62b63f.MP4",
+      "attribution": "https://wger.de/api/v2/video/61/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 61,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/triceps-ez-video-apercu.webp",
+      "posterInstant": 9.102
+    }
   },
   "fentes-marchees": {
     "images": [
@@ -574,7 +636,19 @@ export const medias = {
         "id": 122,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/fentes-marchees-33.mp4",
+      "source": "https://wger.de/media/exercise-video/206/47a65c45-6fd1-4181-b71a-3a6c882e516b.MOV",
+      "attribution": "https://wger.de/api/v2/video/33/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 33,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/fentes-marchees-video-apercu.webp",
+      "posterInstant": 11.162
+    }
   },
   "haussement-halteres": {
     "images": [
@@ -622,7 +696,19 @@ export const medias = {
         "id": 182,
         "modifications": "Redimensionnement et conversion WebP"
       }
-    ]
+    ],
+    "video": {
+      "src": "./medias/flexion-jambes-assis-37.mp4",
+      "source": "https://wger.de/media/exercise-video/366/43df4b79-d4c3-4fbf-bcb5-e0d825b84120.MOV",
+      "attribution": "https://wger.de/api/v2/video/37/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 37,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/flexion-jambes-assis-video-apercu.webp",
+      "posterInstant": 14.94
+    }
   },
   "leg-hack": {
     "images": [
@@ -780,20 +866,6 @@ export const medias = {
       }
     ]
   },
-  "cheville-avancee": {
-    "images": [
-      {
-        "src": "./medias/cheville-avancee-617.webp",
-        "source": "https://wger.de/media/exercise-images/1804/691c69b8-c3db-4177-8435-dd3a97d88542.webp",
-        "attribution": "https://wger.de/api/v2/exerciseimage/617/",
-        "auteur": "Davidgj32",
-        "licence": "CC BY-SA 4.0",
-        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-        "id": 617,
-        "modifications": "Redimensionnement et conversion WebP"
-      }
-    ]
-  },
   "mollets-etirement": {
     "images": [
       {
@@ -821,5 +893,185 @@ export const medias = {
         "modifications": "Redimensionnement et conversion WebP"
       }
     ]
+  },
+  "adducteurs-machine": {
+    "images": [],
+    "video": {
+      "src": "./medias/adducteurs-machine-74.mp4",
+      "source": "https://wger.de/media/exercise-video/12/5148c579-5df2-4618-9a7b-a2e29ac4dd7d.MOV",
+      "attribution": "https://wger.de/api/v2/video/74/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 74,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/adducteurs-machine-video-apercu.webp",
+      "posterInstant": 12.522
+    }
+  },
+  "developpe-epaules-machine": {
+    "images": [],
+    "video": {
+      "src": "./medias/developpe-epaules-machine-11.mp4",
+      "source": "https://wger.de/media/exercise-video/543/dbfd396b-1aab-4a64-a50b-2c31ff0a2cf7.MOV",
+      "attribution": "https://wger.de/api/v2/video/11/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 11,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/developpe-epaules-machine-video-apercu.webp",
+      "posterInstant": 5.276
+    }
+  },
+  "hip": {
+    "images": [],
+    "video": {
+      "src": "./medias/hip-72.mp4",
+      "source": "https://wger.de/media/exercise-video/294/45bacf4b-1bb6-4d47-8bd1-9f00eddd4019.MOV",
+      "attribution": "https://wger.de/api/v2/video/72/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 72,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/hip-video-apercu.webp",
+      "posterInstant": 18.12
+    }
+  },
+  "mollets-assis": {
+    "images": [],
+    "video": {
+      "src": "./medias/mollets-assis-13.mp4",
+      "source": "https://wger.de/media/exercise-video/590/a325ae2e-686b-4a1f-aff2-ba37fa3fa157.MOV",
+      "attribution": "https://wger.de/api/v2/video/13/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 13,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/mollets-assis-video-apercu.webp",
+      "posterInstant": 12.432
+    }
+  },
+  "sq-smith": {
+    "images": [],
+    "video": {
+      "src": "./medias/sq-smith-42.mp4",
+      "source": "https://wger.de/media/exercise-video/341/0cbfeace-dda9-4166-8424-f51358e88a4f.MOV",
+      "attribution": "https://wger.de/api/v2/video/42/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 42,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/sq-smith-video-apercu.webp",
+      "posterInstant": 7.17
+    }
+  },
+  "fentes-marchees-barre": {
+    "images": [],
+    "video": {
+      "src": "./medias/fentes-marchees-barre-34.mp4",
+      "source": "https://wger.de/media/exercise-video/802/85d1d7f8-c3c5-47e8-9b26-56896919e6e7.MOV",
+      "attribution": "https://wger.de/api/v2/video/34/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 34,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/fentes-marchees-barre-video-apercu.webp",
+      "posterInstant": 7.638
+    }
+  },
+  "flexion-pupitre-halteres": {
+    "images": [],
+    "video": {
+      "src": "./medias/flexion-pupitre-halteres-52.mp4",
+      "source": "https://wger.de/media/exercise-video/584/109e8d5d-62a4-40ad-8813-2ccef5bc751f.MOV",
+      "attribution": "https://wger.de/api/v2/video/52/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 52,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/flexion-pupitre-halteres-video-apercu.webp",
+      "posterInstant": 7.812
+    }
+  },
+  "triceps-couche-halteres": {
+    "images": [],
+    "video": {
+      "src": "./medias/triceps-couche-halteres-60.mp4",
+      "source": "https://wger.de/media/exercise-video/245/c253303e-9160-4f1f-b4fe-daf1e6c8661d.MOV",
+      "attribution": "https://wger.de/api/v2/video/60/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 60,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/triceps-couche-halteres-video-apercu.webp",
+      "posterInstant": 11.202
+    }
+  },
+  "flexion-pupitre-ez": {
+    "images": [],
+    "video": {
+      "src": "./medias/flexion-pupitre-ez-53.mp4",
+      "source": "https://wger.de/media/exercise-video/465/b64ca95b-c677-4f3b-bb50-f75edc81aa74.MOV",
+      "attribution": "https://wger.de/api/v2/video/53/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 53,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/flexion-pupitre-ez-video-apercu.webp",
+      "posterInstant": 15.468
+    }
+  },
+  "incline-machine": {
+    "images": [],
+    "video": {
+      "src": "./medias/incline-machine-16.mp4",
+      "source": "https://wger.de/media/exercise-video/538/4349a6f6-4cee-4c09-828b-c5e7fc2c1ff1.MOV",
+      "attribution": "https://wger.de/api/v2/video/16/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 16,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/incline-machine-video-apercu.webp",
+      "posterInstant": 11.916
+    }
+  },
+  "oiseau-halteres-assis": {
+    "images": [],
+    "video": {
+      "src": "./medias/oiseau-halteres-assis-7.mp4",
+      "source": "https://wger.de/media/exercise-video/82/28b53647-27e7-47cf-8852-2ee666c8b628.MOV",
+      "attribution": "https://wger.de/api/v2/video/7/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 7,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/oiseau-halteres-assis-video-apercu.webp",
+      "posterInstant": 3.268
+    }
+  },
+  "triceps-coude-dos": {
+    "images": [],
+    "video": {
+      "src": "./medias/triceps-coude-dos-77.mp4",
+      "source": "https://wger.de/media/exercise-video/655/f1354a78-539c-4f22-a78f-b1f43f920740.MOV",
+      "attribution": "https://wger.de/api/v2/video/77/",
+      "auteur": "Goulart",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "id": 77,
+      "modifications": "Redimensionnement, conversion MP4 et retrait de la piste audio",
+      "poster": "./medias/triceps-coude-dos-video-apercu.webp",
+      "posterInstant": 1.31
+    }
   }
 };

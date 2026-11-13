@@ -1,8 +1,25 @@
-const version = 'cadence-14';
+const version = 'cadence-18';
 const pack = 'cadence-medias-1';
-const files = ['./', './index.html', './style.css', './journal.css', './planning.css', './app.js', './donnees.js', './exercices.js', './mouvements.js', './medias.js', './journal.js', './planning.js', './semaine.js', './alternatives.js', './poids.js', './machines.js', './marque.svg', './icone-180.png', './icone-192.png', './icone-512.png', './app.webmanifest'];
-self.addEventListener('install', event => event.waitUntil(caches.open(version).then(cache => cache.addAll(files))));
+const files = ['./', './index.html', './style.css', './journal.css', './planning.css', './app.js', './donnees.js', './exercices.js', './mouvements.js', './medias.js', './journal.js', './planning.js', './semaine.js', './correspondances.js', './alternatives.js', './poids.js', './machines.js', './marque.svg', './icone-180.png', './icone-192.png', './icone-512.png', './app.webmanifest'];
+self.addEventListener('install', event => {
+  const requests = files.map(file => new Request(new URL(file,self.registration.scope),{cache:'reload'}));
+  event.waitUntil(caches.open(version).then(cache => cache.addAll(requests)));
+});
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => /^cadence-\d+$/.test(key) && key !== version).map(key => caches.delete(key))))));
+
+self.addEventListener('message', event => {
+  const port = event.ports[0];
+  if (event.data !== 'etat-hors-ligne' || !port) return;
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(version);
+      const presentes = new Set((await cache.keys()).map(request => request.url));
+      port.postMessage(files.every(file => presentes.has(new URL(file,self.registration.scope).href)));
+    } catch {
+      port.postMessage(false);
+    }
+  })());
+});
 
 async function media(request) {
   const cache = await caches.open(pack);
@@ -20,14 +37,9 @@ async function media(request) {
 }
 
 async function application(request) {
-  const cache=await caches.open(version);
-  const disponible=await cache.match(request) || (request.mode==='navigate'?await cache.match('./'):null);
-  if(!disponible) return fetch(request);
-  const controller=new AbortController();
-  const delai=setTimeout(()=>controller.abort(),2000);
-  try { return await fetch(request,{signal:controller.signal}); }
-  catch { return disponible; }
-  finally { clearTimeout(delai); }
+  const cache = await caches.open(version);
+  // Les onglets ouverts continuent à utiliser le même lot jusqu'à la relève du worker.
+  return await cache.match(request,{ignoreSearch:request.mode==='navigate'}) || fetch(request);
 }
 
 self.addEventListener('fetch', event => {

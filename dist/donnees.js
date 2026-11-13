@@ -141,7 +141,7 @@ export function records(seances) {
     const cle = groupeMesure(e);
     const mesure = mode(e);
     const valeur = mesureProgression(e,[s]);
-    const r = resultat.get(cle) ?? {nom:e.nom,mesure,meilleur:valeur,reps:0,rm:0};
+    const r = resultat.get(cle) ?? {id:e.id,nom:e.nom,mesure,meilleur:valeur,reps:0,rm:0};
     r.meilleur = mesure === 'assistance' ? Math.min(r.meilleur,valeur) : Math.max(r.meilleur,valeur);
     r.reps = Math.max(r.reps,s.reps);
     if (mesure === 'charge' && s.reps <= 12) r.rm = Math.max(r.rm,s.reps === 1 ? s.kg : s.kg*(1+s.reps/30));

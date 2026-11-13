@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { catalogue } from '../dist/exercices.js';
-import { alternatives, poste } from '../dist/alternatives.js';
+import { alternatives, poste, posteDisponible } from '../dist/alternatives.js';
 
 const trouver = id => catalogue.find(exercice=>exercice.id===id);
 
@@ -23,9 +23,10 @@ test('les tirages verticaux compatibles passent avant les tirages horizontaux',(
 
 test('une machine de jambes occupée ne bloque pas toutes les machines',()=>{
   const exercice = trouver('curlj');
-  const option = alternatives(exercice,catalogue,[poste(exercice)])[0];
-  assert.equal(option.exercice.id,'flexion-jambes-assis');
-  assert.notEqual(poste(option.exercice),poste(exercice));
+  const options = alternatives(exercice,catalogue,[poste(exercice)]);
+  assert.ok(options.some(x=>x.exercice.id==='flexion-jambes-assis'));
+  assert.ok(options.some(x=>x.exercice.id==='flexion-jambes-debout'));
+  assert.ok(options.every(x=>poste(x.exercice)!==poste(exercice)));
 });
 
 test('les dépendances de matériel comptent aussi dans les exclusions',()=>{
@@ -58,15 +59,17 @@ test('une donnée de matériel héritée mal formée ne casse pas les substituti
 test('la rotation à la poulie reste une variante de rotation et exclut les crunchs',()=>{
   const exercice=trouver('rotation-assise');
   const options=alternatives(exercice,catalogue,[poste(exercice)]);
-  assert.deepEqual(options.map(x=>x.exercice.id),['rotation-poulie']);
-  assert.match(options[0].raison,/variante différente/);
+  assert.deepEqual(new Set(options.map(x=>x.exercice.id)),new Set(['rotation-poulie','rotation-medicinal']));
+  assert.ok(options.every(x=>x.raison.includes('variante différente')));
 });
 
 test('l’adduction et l’abduction ne se remplacent pas',()=>{
-  for(const [machine,poulie] of [['adducteurs-machine','adducteurs-poulie'],['abducteurs-machine','abducteurs-poulie']]) {
+  for(const [machine,poulie,sol] of [['adducteurs-machine','adducteurs-poulie','adduction-cote'],['abducteurs-machine','abducteurs-poulie','abduction-cote']]) {
     const exercice=trouver(machine);
     const options=alternatives(exercice,catalogue,[poste(exercice)]);
-    assert.deepEqual(options.map(x=>x.exercice.id),[poulie]);
+    assert.ok(options.some(x=>x.exercice.id===poulie));
+    assert.ok(options.some(x=>x.exercice.id===sol));
+    assert.ok(options.every(x=>x.exercice.muscle===exercice.muscle));
   }
 });
 
@@ -86,4 +89,41 @@ test('le rowing aux haltères dispose d’un tirage à la machine sans banc',()=
   const options=alternatives(trouver('rowing-poitrine'),catalogue,['Bancs','Poulies','Rack et barre','Barre']);
   assert.equal(options[0]?.exercice.id,'rowing-machine-poitrine');
   assert.match(options[0].raison,/Tirage horizontal/);
+});
+
+
+test('les nouveaux développés inclinés proposent des variantes qui conservent l’angle de poussée',()=>{
+  const incline=trouver('incline-machine');
+  const options=alternatives(incline,catalogue,[poste(incline)]);
+  for(const id of ['di','di-smith','incline-barre']) {
+    const variante=options.find(x=>x.exercice.id===id);
+    assert.ok(variante,id);
+    assert.match(variante.raison,/même geste/);
+  }
+  assert.ok(options.filter(x=>x.raison.includes('même geste')).every(x=>x.exercice.id!=='pompes-declinees'));
+});
+
+test('un pupitre occupé exclut les deux flexions avec poids libres et laisse la machine',()=>{
+  const pupitre=new Set(['Pupitre à biceps']);
+  assert.ok(!posteDisponible(trouver('flexion-pupitre-ez'),pupitre));
+  assert.ok(!posteDisponible(trouver('flexion-pupitre-halteres'),pupitre));
+  const options=alternatives(trouver('flexion-pupitre-ez'),catalogue,pupitre);
+  assert.equal(options[0]?.exercice.id,'flexion-biceps-machine');
+});
+
+test('les machines partagées restent exclues quelle que soit la variante',()=>{
+  const couples=[['pre','presse-unilaterale'],['tra-assistees','dips-assistes'],['ext','extension-jambes-unilaterale'],['course-tapis','marche-inclinee-tapis']];
+  for(const [id,autre] of couples) {
+    const bloquer=poste(trouver(id));
+    assert.ok(bloquer,id);
+    assert.ok(!posteDisponible(trouver(autre),new Set([bloquer])),autre);
+  }
+});
+
+test('la mobilité et le cardio ne remplacent pas une séance de musculation',()=>{
+  for(const id of ['rameur','chat-vache','corde-sauts','course-tapis']) {
+    const exercice=trouver(id);
+    assert.ok(alternatives(exercice,catalogue).every(x=>x.exercice.categorie===exercice.categorie));
+  }
+  assert.ok(alternatives(trouver('rameur'),catalogue).every(x=>x.exercice.id!=='rowing-poulie'));
 });

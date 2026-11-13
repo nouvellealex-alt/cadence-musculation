@@ -39,5 +39,12 @@ with ThreadingHTTPServer(("127.0.0.1",0),partial(Serveur,directory=str(source)))
             duree=monotonic()-depart
             assert duree<5,duree
             print(f"Cache utilisable en {duree:.2f} s malgré 6 s de délai côté serveur.")
+            lent.clear()
+            page.goto(adresse+"#donnees")
+            expect(page.locator("#etat-hors-ligne")).to_contain_text("Carnet prêt hors ligne")
+            assert page.evaluate("caches.keys().then(keys => caches.delete(keys.find(key => /^cadence-[0-9]+$/.test(key))))")
+            page.reload()
+            expect(page.locator("#etat-hors-ligne")).to_contain_text("Le carnet hors ligne est incomplet")
+            print("Cache vidé : Cadence signale que le carnet hors ligne est incomplet.")
     finally:
         serveur.shutdown()
